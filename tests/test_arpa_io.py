@@ -3,7 +3,7 @@
 import tempfile
 from io import StringIO
 
-from arpalm import ArpaBoLM
+from arpabo import ArpaBoLM
 
 
 class TestArpaWrite:

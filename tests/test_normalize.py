@@ -1,6 +1,6 @@
 """Tests for text normalization"""
 
-from arpalm.normalize import (
+from arpabo.normalize import (
     clean_text,
     normalize_case,
     normalize_line,

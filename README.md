@@ -47,7 +47,7 @@ arpabo normalized.txt -o model.arpa
 ## Python API
 
 ```python
-from arpalm import ArpaBoLM
+from arpabo import ArpaBoLM
 
 # Build a language model
 lm = ArpaBoLM(max_order=3, smoothing_method="good_turing")

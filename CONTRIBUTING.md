@@ -21,7 +21,7 @@ make test
 make test-fast
 
 # With coverage
-pytest --cov=arpalm
+pytest --cov=arpabo
 
 # Specific test
 pytest tests/test_smoothing.py -v
@@ -45,7 +45,7 @@ make format
 ## Project Structure
 
 ```
-src/arpalm/
+src/arpabo/
 ├── lm.py              # Core n-gram management
 ├── smoothing/         # Smoothing algorithms
 │   ├── base.py
@@ -63,11 +63,11 @@ src/arpalm/
 
 ## Adding a New Smoothing Method
 
-1. Create `src/arpalm/smoothing/my_method.py`:
+1. Create `src/arpabo/smoothing/my_method.py`:
 
 ```python
-from arpalm.smoothing.base import SmoothingMethod
-from arpalm.smoothing.utils import set_ngram_prob
+from arpabo.smoothing.base import SmoothingMethod
+from arpabo.smoothing.utils import set_ngram_prob
 
 class MyMethodSmoother(SmoothingMethod):
     def needs_backoff_weights(self) -> bool:
@@ -78,7 +78,7 @@ class MyMethodSmoother(SmoothingMethod):
         pass
 ```
 
-2. Add to `src/arpalm/smoothing/__init__.py`
+2. Add to `src/arpabo/smoothing/__init__.py`
 3. Add to factory in `create_smoother()`
 4. Add tests in `tests/test_smoothing.py`
 

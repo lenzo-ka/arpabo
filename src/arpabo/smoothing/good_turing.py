@@ -3,8 +3,8 @@
 from collections import defaultdict
 from typing import Any
 
-from arpalm.smoothing.base import SmoothingMethod
-from arpalm.smoothing.utils import compute_simple_backoff_weights, set_ngram_prob
+from arpabo.smoothing.base import SmoothingMethod
+from arpabo.smoothing.utils import compute_simple_backoff_weights, set_ngram_prob
 
 
 class GoodTuringSmoother(SmoothingMethod):

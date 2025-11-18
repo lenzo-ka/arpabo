@@ -2,7 +2,7 @@
 
 from math import exp, log
 
-from arpalm.arpa_io import get_ngram_prob
+from arpabo.arpa_io import get_ngram_prob
 
 
 def debug_sentence(lm, sentence: str) -> None:

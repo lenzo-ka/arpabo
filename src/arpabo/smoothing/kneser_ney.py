@@ -3,8 +3,8 @@
 from collections import defaultdict
 from typing import Any
 
-from arpalm.smoothing.base import SmoothingMethod
-from arpalm.smoothing.utils import compute_simple_backoff_weights, set_ngram_prob
+from arpabo.smoothing.base import SmoothingMethod
+from arpabo.smoothing.utils import compute_simple_backoff_weights, set_ngram_prob
 
 
 class KneserNeySmoother(SmoothingMethod):
@@ -52,7 +52,7 @@ class KneserNeySmoother(SmoothingMethod):
                         continuation_counts[w2] += 1
             return continuation_counts
 
-        from arpalm.lm import ArpaBoLM
+        from arpabo.lm import ArpaBoLM
 
         continuation_counts = ArpaBoLM._make_nested_defaultdict(order - 1)
 

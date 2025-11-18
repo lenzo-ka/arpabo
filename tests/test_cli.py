@@ -10,7 +10,7 @@ class TestCLI:
 
     def test_help(self):
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli", "--help"],
+            [sys.executable, "-m", "arpabo.cli", "--help"],
             capture_output=True,
             text=True,
         )
@@ -22,7 +22,7 @@ class TestCLI:
             arpa_path = f.name
 
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli", "--demo", "-o", arpa_path],
+            [sys.executable, "-m", "arpabo.cli", "--demo", "-o", arpa_path],
             capture_output=True,
             text=True,
         )
@@ -50,7 +50,7 @@ class TestCLI:
             [
                 sys.executable,
                 "-m",
-                "arpalm.cli",
+                "arpabo.cli",
                 "-t",
                 "hello world",
                 "-o",
@@ -76,7 +76,7 @@ class TestCLI:
                 [
                     sys.executable,
                     "-m",
-                    "arpalm.cli",
+                    "arpabo.cli",
                     "-t",
                     "hello world",
                     "-o",
@@ -103,7 +103,7 @@ class TestCLI:
                 [
                     sys.executable,
                     "-m",
-                    "arpalm.cli",
+                    "arpabo.cli",
                     "-t",
                     "the quick brown fox",
                     "-o",
@@ -128,7 +128,7 @@ class TestCLI:
 
     def test_no_input_error(self):
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli"],
+            [sys.executable, "-m", "arpabo.cli"],
             capture_output=True,
             text=True,
         )

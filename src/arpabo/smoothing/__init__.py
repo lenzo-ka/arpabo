@@ -6,10 +6,10 @@ This module provides various smoothing techniques for n-gram language models:
 - Katz Backoff: Uses discount mass with backoff weights
 """
 
-from arpalm.smoothing.base import SmoothingMethod
-from arpalm.smoothing.good_turing import GoodTuringSmoother
-from arpalm.smoothing.katz_backoff import KatzBackoffSmoother
-from arpalm.smoothing.kneser_ney import KneserNeySmoother
+from arpabo.smoothing.base import SmoothingMethod
+from arpabo.smoothing.good_turing import GoodTuringSmoother
+from arpabo.smoothing.katz_backoff import KatzBackoffSmoother
+from arpabo.smoothing.kneser_ney import KneserNeySmoother
 
 __all__ = [
     "SmoothingMethod",

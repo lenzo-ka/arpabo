@@ -5,7 +5,7 @@ import sys
 import tempfile
 from io import StringIO
 
-from arpalm import ArpaBoLM
+from arpabo import ArpaBoLM
 
 
 class TestEndToEnd:
@@ -45,7 +45,7 @@ class TestEndToEnd:
 
         # Generate ARPA file
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli", "--demo", "-o", arpa_path],
+            [sys.executable, "-m", "arpabo.cli", "--demo", "-o", arpa_path],
             capture_output=True,
             text=True,
         )
@@ -122,7 +122,7 @@ class TestLargeCorpus:
 
     def test_alice_corpus_all_methods(self):
         """Test Alice corpus with all smoothing methods"""
-        from arpalm import get_example_corpus
+        from arpabo import get_example_corpus
 
         corpus_path = get_example_corpus()
 
@@ -141,7 +141,7 @@ class TestLargeCorpus:
 
     def test_alice_different_orders(self):
         """Test Alice corpus with different n-gram orders"""
-        from arpalm import get_example_corpus
+        from arpabo import get_example_corpus
 
         corpus_path = get_example_corpus()
 

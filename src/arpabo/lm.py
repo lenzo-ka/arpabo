@@ -7,10 +7,10 @@ from io import StringIO
 from math import log
 from typing import Any, Optional, TextIO
 
-from arpalm.arpa_io import load_arpa_file, write_arpa, write_arpa_file
-from arpalm.debug import debug_sentence, interactive_debug, print_stats
-from arpalm.normalize import normalize_line, normalize_token, normalize_unicode
-from arpalm.smoothing import create_smoother
+from arpabo.arpa_io import load_arpa_file, write_arpa, write_arpa_file
+from arpabo.debug import debug_sentence, interactive_debug, print_stats
+from arpabo.normalize import normalize_line, normalize_token, normalize_unicode
+from arpabo.smoothing import create_smoother
 
 # Author: Kevin Lenzo
 

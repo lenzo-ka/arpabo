@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from arpalm.smoothing.base import SmoothingMethod
-from arpalm.smoothing.utils import set_ngram_prob
+from arpabo.smoothing.base import SmoothingMethod
+from arpabo.smoothing.utils import set_ngram_prob
 
 
 class KatzBackoffSmoother(SmoothingMethod):

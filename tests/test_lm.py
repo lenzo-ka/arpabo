@@ -5,7 +5,7 @@ from io import StringIO
 
 import pytest
 
-from arpalm import ArpaBoLM
+from arpabo import ArpaBoLM
 
 
 class TestArpaBoLMBasics:

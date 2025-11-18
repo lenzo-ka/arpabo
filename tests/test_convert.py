@@ -6,7 +6,7 @@ from io import StringIO
 
 import pytest
 
-from arpalm import ArpaBoLM, ConversionError, check_conversion_tools, to_pocketsphinx_binary
+from arpabo import ArpaBoLM, ConversionError, check_conversion_tools, to_pocketsphinx_binary
 
 
 class TestConversionTools:
@@ -108,7 +108,7 @@ class TestCLIConversion:
             [
                 sys.executable,
                 "-m",
-                "arpalm.cli",
+                "arpabo.cli",
                 "-t",
                 "hello world",
                 "-o",

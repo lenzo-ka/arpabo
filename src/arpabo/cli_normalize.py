@@ -5,7 +5,7 @@
 import argparse
 import sys
 
-from arpalm.normalize import normalize_line
+from arpabo.normalize import normalize_line
 
 
 def main() -> None:

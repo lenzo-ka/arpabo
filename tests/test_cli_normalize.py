@@ -10,7 +10,7 @@ class TestNormalizeCLI:
 
     def test_help(self):
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli_normalize", "--help"],
+            [sys.executable, "-m", "arpabo.cli_normalize", "--help"],
             capture_output=True,
             text=True,
         )
@@ -19,7 +19,7 @@ class TestNormalizeCLI:
 
     def test_stdin_to_stdout(self):
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli_normalize"],
+            [sys.executable, "-m", "arpabo.cli_normalize"],
             input="Hello World\nGoodbye World\n",
             capture_output=True,
             text=True,
@@ -30,7 +30,7 @@ class TestNormalizeCLI:
 
     def test_lowercase_normalization(self):
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli_normalize", "-c", "lower"],
+            [sys.executable, "-m", "arpabo.cli_normalize", "-c", "lower"],
             input="HELLO WORLD\n",
             capture_output=True,
             text=True,
@@ -41,7 +41,7 @@ class TestNormalizeCLI:
 
     def test_token_normalization(self):
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli_normalize", "-n"],
+            [sys.executable, "-m", "arpabo.cli_normalize", "-n"],
             input="Hello, World!\n",
             capture_output=True,
             text=True,
@@ -52,7 +52,7 @@ class TestNormalizeCLI:
 
     def test_add_markers(self):
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli_normalize", "--add-markers"],
+            [sys.executable, "-m", "arpabo.cli_normalize", "--add-markers"],
             input="hello world\n",
             capture_output=True,
             text=True,
@@ -67,7 +67,7 @@ class TestNormalizeCLI:
             input_file = f.name
 
         result = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli_normalize", input_file, "-c", "lower"],
+            [sys.executable, "-m", "arpabo.cli_normalize", input_file, "-c", "lower"],
             capture_output=True,
             text=True,
         )
@@ -92,7 +92,7 @@ class TestNormalizeCLI:
             [
                 sys.executable,
                 "-m",
-                "arpalm.cli_normalize",
+                "arpabo.cli_normalize",
                 input_file,
                 "-o",
                 output_file,
@@ -132,7 +132,7 @@ class TestNormalizeCLI:
             [
                 sys.executable,
                 "-m",
-                "arpalm.cli_normalize",
+                "arpabo.cli_normalize",
                 input_file,
                 "-o",
                 normalized_file,
@@ -148,7 +148,7 @@ class TestNormalizeCLI:
 
         # Step 2: Build LM
         result2 = subprocess.run(
-            [sys.executable, "-m", "arpalm.cli", normalized_file, "-o", arpa_file],
+            [sys.executable, "-m", "arpabo.cli", normalized_file, "-o", arpa_file],
             capture_output=True,
             text=True,
         )

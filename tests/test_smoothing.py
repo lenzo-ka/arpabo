@@ -4,7 +4,7 @@ from io import StringIO
 
 import pytest
 
-from arpalm import ArpaBoLM, GoodTuringSmoother, KatzBackoffSmoother, KneserNeySmoother, create_smoother
+from arpabo import ArpaBoLM, GoodTuringSmoother, KatzBackoffSmoother, KneserNeySmoother, create_smoother
 
 
 class TestSmoothingFactory:

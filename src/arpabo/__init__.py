@@ -17,22 +17,22 @@ Command Line Usage:
     arpalm --demo -o model.arpa  # Use example corpus
 """
 
-from arpalm.convert import (
+from arpabo.convert import (
     ConversionError,
     check_conversion_tools,
     to_kaldi_fst,
     to_pocketsphinx_binary,
 )
-from arpalm.data import get_example_corpus, list_example_corpora
-from arpalm.lm import ArpaBoLM
-from arpalm.normalize import (
+from arpabo.data import get_example_corpus, list_example_corpora
+from arpabo.lm import ArpaBoLM
+from arpabo.normalize import (
     clean_text,
     normalize_case,
     normalize_line,
     normalize_token,
     normalize_unicode,
 )
-from arpalm.smoothing import (
+from arpabo.smoothing import (
     GoodTuringSmoother,
     KatzBackoffSmoother,
     KneserNeySmoother,

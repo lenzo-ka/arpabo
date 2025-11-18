@@ -5,8 +5,8 @@
 import argparse
 import sys
 
-from arpalm.data import get_example_corpus
-from arpalm.lm import ArpaBoLM
+from arpabo.data import get_example_corpus
+from arpabo.lm import ArpaBoLM
 
 
 def _create_parser():
@@ -102,7 +102,7 @@ def _handle_conversions(args):
     if not (args.to_bin or args.to_fst):
         return
 
-    from arpalm.convert import ConversionError, to_kaldi_fst, to_pocketsphinx_binary
+    from arpabo.convert import ConversionError, to_kaldi_fst, to_pocketsphinx_binary
 
     if args.to_bin:
         try:

@@ -1,6 +1,5 @@
 include README.md
 include LICENSE
 include pyproject.toml
-recursive-include src/arpalm py.typed
-recursive-include src/arpalm/data *.txt
-
+recursive-include src/arpabo py.typed
+recursive-include src/arpabo/data *.txt

@@ -2,7 +2,7 @@
 
 import pytest
 
-from arpalm import get_example_corpus, list_example_corpora
+from arpabo import get_example_corpus, list_example_corpora
 
 
 class TestExampleData:
@@ -31,7 +31,7 @@ class TestExampleData:
             get_example_corpus("nonexistent.txt")
 
     def test_alice_corpus_usable(self):
-        from arpalm import ArpaBoLM
+        from arpabo import ArpaBoLM
 
         corpus_path = get_example_corpus()
         lm = ArpaBoLM(verbose=False)

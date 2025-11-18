@@ -87,7 +87,7 @@ def test_real_asr_decode():
     # Build language model from Alice corpus
     print("\n4. Building language model from Alice corpus...")
 
-    from arpalm import ArpaBoLM, get_example_corpus
+    from arpabo import ArpaBoLM, get_example_corpus
 
     corpus_path = get_example_corpus()
     lm = ArpaBoLM(max_order=3, smoothing_method="good_turing", case="lower", verbose=False)
@@ -107,7 +107,7 @@ def test_real_asr_decode():
 
     # Convert to binary
     try:
-        from arpalm.convert import to_pocketsphinx_binary
+        from arpabo.convert import to_pocketsphinx_binary
 
         bin_path = to_pocketsphinx_binary(arpa_path, verbose=False)
         print(f"   Binary: {bin_path}")

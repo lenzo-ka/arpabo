@@ -28,8 +28,8 @@ classifiers = [
 keywords = ["nlp", "language-model", "arpa", "n-gram", "smoothing", "katz-backoff", "good-turing", "kneser-ney"]
 
 [project.scripts]
-arpabo = "arpalm.cli:main"
-arpabo-normalize = "arpalm.cli_normalize:main"
+arpabo = "arpabo.cli:main"
+arpabo-normalize = "arpabo.cli_normalize:main"
 
 [project.urls]
 Homepage = "https://github.com/lenzo-ka/arpabo"
@@ -39,7 +39,7 @@ Issues = "https://github.com/lenzo-ka/arpabo/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-arpalm = ["py.typed", "data/*.txt"]
+arpabo = ["py.typed", "data/*.txt"]
 
 # Ruff configuration (append to pyproject.toml)
 
@@ -64,7 +64,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["arpalm"]
+known-first-party = ["arpabo"]
 
 [tool.mypy]
 python_version = "3.9"
