@@ -138,6 +138,12 @@ def main() -> None:
             print(f"Using example corpus: {example_file}", file=sys.stderr)
         args.files = [example_file] + (args.files or [])
 
+        # Apply normalization for demo (unless user explicitly set options)
+        if args.case is None:
+            args.case = "lower"
+            if args.verbose:
+                print("Demo: Using lowercase normalization", file=sys.stderr)
+
     if not args.load_model and not args.files and args.text is None and not args.demo:
         parser.error("Input must be specified with input files, --text, or --demo")
 
