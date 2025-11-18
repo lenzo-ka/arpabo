@@ -40,7 +40,7 @@ from arpabo.smoothing import (
     create_smoother,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = [
     "ArpaBoLM",
     "ConversionError",

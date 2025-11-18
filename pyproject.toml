@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arpabo"
-version = "0.1.0"
+version = "0.1.1"
 description = "Build ARPA format statistical language models with multiple smoothing methods"
 readme = "README.md"
 requires-python = ">=3.9"
