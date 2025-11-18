@@ -98,28 +98,35 @@ arpabo clean.txt -o model.arpa
 cat corpus.txt | arpabo-normalize -c lower -n | arpabo -o model.arpa
 ```
 
-### Binary Conversion
+### Binary Conversion (Optional)
+
+ARPA files work directly with PocketSphinx. Binary conversion is optional for better performance:
 
 ```bash
-# Automatic PocketSphinx binary
+# Use ARPA directly (works as-is)
+arpabo corpus.txt -o model.arpa
+
+# Optional: Convert to binary for faster loading
 arpabo corpus.txt -o model.arpa --to-bin
 
-# Kaldi FST format
+# Optional: Kaldi FST format
 arpabo corpus.txt -o model.arpa --to-fst
 
-# Manual conversion
+# Or convert manually later
 pocketsphinx_lm_convert -i model.arpa -o model.lm.bin
 ```
 
 ## Compatibility
 
-ArpaLM produces standard ARPA format models compatible with:
+Produces standard ARPA format models that work directly with:
 
-- **Kaldi** - Convert with `arpa2fst`
-- **PocketSphinx** - Convert with `pocketsphinx_lm_convert`
+- **PocketSphinx** - Use ARPA directly (optional binary conversion for speed)
+- **Kaldi** - Use ARPA directly or convert to FST
 - **SphinxTrain** - Use ARPA directly
 - **NVIDIA Riva** - ARPA format supported
 - **Julius**, **HTK** - ARPA compatible
+
+Binary conversion is optional and only improves loading speed.
 
 ## Development
 
