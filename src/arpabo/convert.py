@@ -84,7 +84,7 @@ def to_pocketsphinx_binary(arpa_path: str, bin_path: Optional[str] = None, verbo
         return bin_path
 
     except subprocess.TimeoutExpired as e:
-        raise ConversionError("Conversion timed out after 5 minutes") from e
+        raise ConversionError("Conversion timed out after 5 minutes") from e from e
     except Exception as e:
         raise ConversionError(f"Conversion failed: {e}") from e
 
@@ -155,7 +155,7 @@ def to_kaldi_fst(arpa_path: str, fst_path: Optional[str] = None, verbose: bool =
         return fst_path
 
     except subprocess.TimeoutExpired as e:
-        raise ConversionError("Conversion timed out after 5 minutes") from e
+        raise ConversionError("Conversion timed out after 5 minutes") from e from e
     except Exception as e:
         raise ConversionError(f"Conversion failed: {e}") from e
 
