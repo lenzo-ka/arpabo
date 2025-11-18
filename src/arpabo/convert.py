@@ -7,6 +7,7 @@ using external tools (PocketSphinx, Kaldi, etc.)
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 
 class ConversionError(Exception):
@@ -15,7 +16,7 @@ class ConversionError(Exception):
     pass
 
 
-def find_pocketsphinx_converter() -> str | None:
+def find_pocketsphinx_converter() -> Optional[str]:
     """Find pocketsphinx_lm_convert executable.
 
     Returns:
@@ -41,7 +42,7 @@ def find_pocketsphinx_converter() -> str | None:
     return None
 
 
-def to_pocketsphinx_binary(arpa_path: str, bin_path: str | None = None, verbose: bool = False) -> str:
+def to_pocketsphinx_binary(arpa_path: str, bin_path: Optional[str] = None, verbose: bool = False) -> str:
     """Convert ARPA model to PocketSphinx binary format.
 
     Args:
@@ -88,7 +89,7 @@ def to_pocketsphinx_binary(arpa_path: str, bin_path: str | None = None, verbose:
         raise ConversionError(f"Conversion failed: {e}")
 
 
-def find_kaldi_arpa2fst() -> str | None:
+def find_kaldi_arpa2fst() -> Optional[str]:
     """Find Kaldi's arpa2fst executable.
 
     Returns:
@@ -112,7 +113,7 @@ def find_kaldi_arpa2fst() -> str | None:
     return None
 
 
-def to_kaldi_fst(arpa_path: str, fst_path: str | None = None, verbose: bool = False) -> str:
+def to_kaldi_fst(arpa_path: str, fst_path: Optional[str] = None, verbose: bool = False) -> str:
     """Convert ARPA model to Kaldi FST format.
 
     Args:
