@@ -5,8 +5,8 @@ Thank you for your interest in contributing to ArpaLM!
 ## Development Setup
 
 ```bash
-git clone https://github.com/lenzo-ka/arpalm.git
-cd arpalm
+git clone https://github.com/lenzo-ka/arpa-lm.git
+cd arpa-lm
 make venv
 source venv/bin/activate
 ```

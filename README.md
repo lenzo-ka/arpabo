@@ -1,9 +1,9 @@
-# ArpaLM
+# arpa-lm
 
 Build ARPA format statistical language models with multiple smoothing methods.
 
-[![Tests](https://github.com/lenzo-ka/arpalm/workflows/Tests/badge.svg)](https://github.com/lenzo-ka/arpalm/actions)
-[![Lint](https://github.com/lenzo-ka/arpalm/workflows/Lint/badge.svg)](https://github.com/lenzo-ka/arpalm/actions)
+[![Tests](https://github.com/lenzo-ka/arpa-lm/workflows/Tests/badge.svg)](https://github.com/lenzo-ka/arpa-lm/actions)
+[![Lint](https://github.com/lenzo-ka/arpa-lm/workflows/Lint/badge.svg)](https://github.com/lenzo-ka/arpa-lm/actions)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -20,28 +20,28 @@ Build ARPA format statistical language models with multiple smoothing methods.
 ## Installation
 
 ```bash
-pip install arpalm
+pip install arpa-lm
 ```
 
 This installs two commands:
-- `arpalm` - Build language models
-- `arpalm-normalize` - Normalize text corpora
+- `arpa-lm` - Build language models
+- `arpa-lm-normalize` - Normalize text corpora
 
 ## Quick Start
 
 ```bash
 # Quick demo
-arpalm --demo -o model.arpa
+arpa-lm --demo -o model.arpa
 
 # Build from your corpus
-arpalm corpus.txt -o model.arpa
+arpa-lm corpus.txt -o model.arpa
 
 # With binary conversion
-arpalm corpus.txt -o model.arpa --to-bin
+arpa-lm corpus.txt -o model.arpa --to-bin
 
 # Two-stage: normalize then build
-arpalm-normalize corpus.txt -o normalized.txt -c lower -n
-arpalm normalized.txt -o model.arpa
+arpa-lm-normalize corpus.txt -o normalized.txt -c lower -n
+arpa-lm normalized.txt -o model.arpa
 ```
 
 ## Python API
@@ -69,43 +69,43 @@ lm.write_file("model.arpa")
 ### Basic Usage
 
 ```bash
-arpalm corpus.txt -o model.arpa
+arpa-lm corpus.txt -o model.arpa
 ```
 
 ### With Options
 
 ```bash
 # 4-gram with Kneser-Ney smoothing
-arpalm corpus.txt -o model.arpa -m 4 -s kneser_ney
+arpa-lm corpus.txt -o model.arpa -m 4 -s kneser_ney
 
 # Lowercase normalization
-arpalm corpus.txt -o model.arpa -c lower -v
+arpa-lm corpus.txt -o model.arpa -c lower -v
 
 # Token normalization (strip punctuation)
-arpalm corpus.txt -o model.arpa -n
+arpa-lm corpus.txt -o model.arpa -n
 ```
 
 ### Corpus Preprocessing
 
 ```bash
 # Normalize separately
-arpalm-normalize corpus.txt -o clean.txt -c lower -n
+arpa-lm-normalize corpus.txt -o clean.txt -c lower -n
 
 # Build model
-arpalm clean.txt -o model.arpa
+arpa-lm clean.txt -o model.arpa
 
 # Or pipeline
-cat corpus.txt | arpalm-normalize -c lower -n | arpalm -o model.arpa
+cat corpus.txt | arpa-lm-normalize -c lower -n | arpa-lm -o model.arpa
 ```
 
 ### Binary Conversion
 
 ```bash
 # Automatic PocketSphinx binary
-arpalm corpus.txt -o model.arpa --to-bin
+arpa-lm corpus.txt -o model.arpa --to-bin
 
 # Kaldi FST format
-arpalm corpus.txt -o model.arpa --to-fst
+arpa-lm corpus.txt -o model.arpa --to-fst
 
 # Manual conversion
 pocketsphinx_lm_convert -i model.arpa -o model.lm.bin
@@ -124,8 +124,8 @@ ArpaLM produces standard ARPA format models compatible with:
 ## Development
 
 ```bash
-git clone https://github.com/lenzo-ka/arpalm.git
-cd arpalm
+git clone https://github.com/lenzo-ka/arpa-lm.git
+cd arpa-lm
 make venv
 source venv/bin/activate
 make test
