@@ -17,13 +17,20 @@ Command Line Usage:
     arpalm --demo -o model.arpa  # Use example corpus
 """
 
+from arpabo.comparison import (
+    ModelComparison,
+    compare_smoothing_methods,
+    print_smoothing_comparison,
+)
 from arpabo.convert import (
     ConversionError,
     check_conversion_tools,
     to_kaldi_fst,
     to_pocketsphinx_binary,
 )
+from arpabo.crossval import cross_validate, print_cv_results
 from arpabo.data import get_example_corpus, list_example_corpora
+from arpabo.interpolation import InterpolatedModel, tune_interpolation_weights
 from arpabo.lm import ArpaBoLM
 from arpabo.normalize import (
     clean_text,
@@ -32,6 +39,7 @@ from arpabo.normalize import (
     normalize_token,
     normalize_unicode,
 )
+from arpabo.presets import get_preset, list_presets, print_presets
 from arpabo.smoothing import (
     GoodTuringSmoother,
     KatzBackoffSmoother,
@@ -39,24 +47,37 @@ from arpabo.smoothing import (
     SmoothingMethod,
     create_smoother,
 )
+from arpabo.utils import parse_order_spec, parse_range_spec
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 __all__ = [
     "ArpaBoLM",
     "ConversionError",
     "GoodTuringSmoother",
+    "InterpolatedModel",
     "KatzBackoffSmoother",
     "KneserNeySmoother",
+    "ModelComparison",
     "SmoothingMethod",
     "check_conversion_tools",
     "clean_text",
+    "compare_smoothing_methods",
     "create_smoother",
+    "cross_validate",
     "get_example_corpus",
+    "get_preset",
     "list_example_corpora",
+    "list_presets",
     "normalize_case",
     "normalize_line",
     "normalize_token",
     "normalize_unicode",
+    "parse_order_spec",
+    "parse_range_spec",
+    "print_cv_results",
+    "print_presets",
+    "print_smoothing_comparison",
     "to_kaldi_fst",
     "to_pocketsphinx_binary",
+    "tune_interpolation_weights",
 ]

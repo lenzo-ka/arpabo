@@ -56,3 +56,7 @@ Thumbs.db
 # Audio files (except test data)
 *.wav
 !tests/data/*.wav
+
+# Development planning docs (work in progress)
+arpabo_feature_suggestions.md
+DEVELOPMENT_PLAN.md
