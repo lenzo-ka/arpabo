@@ -49,7 +49,7 @@ from arpabo.smoothing import (
 )
 from arpabo.utils import parse_order_spec, parse_range_spec
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 __all__ = [
     "ArpaBoLM",
     "ConversionError",
