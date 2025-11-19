@@ -135,3 +135,113 @@ class TestCLI:
 
         # Should fail when no input provided
         assert result.returncode != 0
+
+    def test_multi_order_training(self):
+        """Test --orders flag for multi-order training."""
+        import os
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "arpabo.cli",
+                    "--demo",
+                    "-o",
+                    tmpdir,
+                    "--orders",
+                    "1,2,3",
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            assert result.returncode == 0
+
+            # Verify all files were created
+            for order in [1, 2, 3]:
+                arpa_file = os.path.join(tmpdir, f"{order}gram.arpa")
+                assert os.path.exists(arpa_file), f"Missing {order}gram.arpa"
+
+                # Verify valid ARPA format
+                with open(arpa_file) as f:
+                    content = f.read()
+                    assert "\\data\\" in content
+                    assert f"ngram {order}=" in content
+                    assert "\\end\\" in content
+
+    def test_multi_order_range_syntax(self):
+        """Test --orders with range syntax."""
+        import os
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "arpabo.cli",
+                    "--demo",
+                    "-o",
+                    tmpdir,
+                    "--orders",
+                    "1-3",
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            assert result.returncode == 0
+
+            # Verify all files were created
+            for order in [1, 2, 3]:
+                arpa_file = os.path.join(tmpdir, f"{order}gram.arpa")
+                assert os.path.exists(arpa_file)
+
+    def test_multi_order_mixed_syntax(self):
+        """Test --orders with mixed syntax."""
+        import os
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "arpabo.cli",
+                    "--demo",
+                    "-o",
+                    tmpdir,
+                    "--orders",
+                    "1-2,4",
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            assert result.returncode == 0
+
+            # Verify correct files were created
+            for order in [1, 2, 4]:
+                arpa_file = os.path.join(tmpdir, f"{order}gram.arpa")
+                assert os.path.exists(arpa_file)
+
+            # Order 3 should not exist
+            assert not os.path.exists(os.path.join(tmpdir, "3gram.arpa"))
+
+    def test_multi_order_requires_output_dir(self):
+        """Test --orders requires -o flag."""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "arpabo.cli",
+                "--demo",
+                "--orders",
+                "1,2",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        # Should fail without -o
+        assert result.returncode != 0
+        assert "requires -o" in result.stderr
