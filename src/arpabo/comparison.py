@@ -357,10 +357,10 @@ class ModelComparison:
         print("-" * 50)
         print(f"  Perplexity:    {eval_data['perplexity']:>8.1f}")
         print(f"  Cross-entropy: {eval_data['cross_entropy']:>8.2f} bits/word")
-        print(f"  OOV rate:      {eval_data['oov_rate']*100:>8.1f}%")
+        print(f"  OOV rate:      {eval_data['oov_rate'] * 100:>8.1f}%")
 
         if "overall_backoff_rate" in eval_data:
-            print(f"  Backoff rate:  {eval_data['overall_backoff_rate']*100:>8.1f}%")
+            print(f"  Backoff rate:  {eval_data['overall_backoff_rate'] * 100:>8.1f}%")
 
         # Add rationale
         if goal == "first-pass":
@@ -375,11 +375,11 @@ class ModelComparison:
             if "overall_backoff_rate" in eval_data:
                 backoff = eval_data["overall_backoff_rate"]
                 if backoff > 0.4:
-                    print(f"  → Good backoff rate ({backoff*100:.1f}%) for diverse N-best lists")
+                    print(f"  → Good backoff rate ({backoff * 100:.1f}%) for diverse N-best lists")
                 elif backoff > 0.2:
-                    print(f"  → Moderate backoff rate ({backoff*100:.1f}%)")
+                    print(f"  → Moderate backoff rate ({backoff * 100:.1f}%)")
                 else:
-                    print(f"  → Low backoff rate ({backoff*100:.1f}%) - sharp predictions")
+                    print(f"  → Low backoff rate ({backoff * 100:.1f}%) - sharp predictions")
 
         elif goal == "rescoring":
             print("\n  → Lowest perplexity for best discrimination")

@@ -451,12 +451,12 @@ def main() -> None:
             print("=" * 50)
             with open(args.backoff) as f:
                 backoff = lm.backoff_rate(f)
-            print(f"Overall backoff rate: {backoff['overall_backoff_rate']*100:.1f}%")
+            print(f"Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%")
             print()
             print("Query resolution:")
             for order in sorted(backoff["order_usage"].keys(), reverse=True):
                 usage = backoff["order_usage"][order]
-                print(f"  {order}-gram hits: {usage*100:>5.1f}%")
+                print(f"  {order}-gram hits: {usage * 100:>5.1f}%")
 
     # Write output
     if args.output:

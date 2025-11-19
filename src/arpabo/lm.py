@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime
 from io import StringIO
 from math import log
-from typing import Any, Optional, TextIO
+from typing import Any, Optional, TextIO, Union
 
 from arpabo.arpa_io import get_ngram_prob, load_arpa_file, write_arpa, write_arpa_file
 from arpabo.debug import debug_sentence, interactive_debug, print_stats
@@ -488,7 +488,7 @@ class ArpaBoLM:
         print("Evaluation Results:")
         print(f"  Sentences:      {results['num_sentences']:>8,}")
         print(f"  Words:          {results['num_words']:>8,}")
-        print(f"  OOV words:      {results['num_oov']:>8,} ({results['oov_rate']*100:.1f}%)")
+        print(f"  OOV words:      {results['num_oov']:>8,} ({results['oov_rate'] * 100:.1f}%)")
         print()
         print(f"  Perplexity:     {results['perplexity']:>8.1f}")
         print(f"  Cross-entropy:  {results['cross_entropy']:>8.2f} bits/word")
@@ -685,12 +685,12 @@ class ArpaBoLM:
             with open(test_file) as f:
                 backoff = self.backoff_rate(f)
 
-            print(f"  Overall backoff rate: {backoff['overall_backoff_rate']*100:.1f}%")
+            print(f"  Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%")
             print()
             print("  Query resolution:")
             for order in sorted(backoff["order_usage"].keys(), reverse=True):
                 usage = backoff["order_usage"][order]
-                print(f"    {order}-gram hits: {usage*100:>5.1f}%")
+                print(f"    {order}-gram hits: {usage * 100:>5.1f}%")
 
     def _count_ngrams(self, gram_dict: Any, order: int) -> int:
         """Count how many different n-grams we have of a given order"""
@@ -792,7 +792,7 @@ class ArpaBoLM:
         return cls(**params)
 
     @classmethod
-    def create_uniform(cls, vocab: list[str] | str, add_start: bool = True) -> "ArpaBoLM":
+    def create_uniform(cls, vocab: Union[list[str], str], add_start: bool = True) -> "ArpaBoLM":
         """
         Create uniform (maximum entropy) language model.
 
@@ -862,7 +862,7 @@ class ArpaBoLM:
         return lm
 
     def prune_vocabulary(
-        self, method: str = "frequency", threshold: int | float = 100, keep_markers: bool = True
+        self, method: str = "frequency", threshold: Union[int, float] = 100, keep_markers: bool = True
     ) -> "ArpaBoLM":
         """
         Create new model with pruned vocabulary to reduce size.

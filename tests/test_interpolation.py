@@ -53,7 +53,7 @@ class TestInterpolatedModelInit:
     def test_init_uniform_weights(self, trained_models):
         """Test initialization with uniform weights."""
         n = len(trained_models)
-        weights = {order: 1.0 / n for order in trained_models}
+        weights = dict.fromkeys(trained_models, 1.0 / n)
 
         interpolated = InterpolatedModel(models=trained_models, weights=weights)
 
