@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Hyperparameter Optimization Framework**
+  - `optimize_hyperparameters()` function for automated model selection via grid search
+  - Three evaluation modes:
+    - `"holdout"`: Fast train/dev split (default, recommended)
+    - `"external"`: Separate test file evaluation
+    - `"source"`: K-fold cross-validation for robust estimates
+  - Configurable search space with practical defaults:
+    - Orders: [1, 2, 3] - includes unigram baseline
+    - Methods: ["good_turing", "kneser_ney"] - most common
+    - Discount masses: [0.5, 0.7, 0.9] - for Katz backoff variants
+  - Support for uniform (0-gram) baseline as lower bound (`include_uniform=True`)
+  - Captures optimized parameters from `auto` method
+
+- **Visualization & Results Display**
+  - `plot_optimization_results()` with dual output modes:
+    - Clean text summary (always available, zero dependencies)
+    - Comprehensive matplotlib plots (optional, 4-panel visualization)
+  - Real-time progress tracking with comparison vs current best
+  - Intermediate summaries after completing each n-gram order
+  - Parameter comparison tables for tunable methods
+  - Final analysis with multiple perspectives:
+    - All configurations ranked by perplexity
+    - Best by n-gram order and smoothing method
+    - Discount mass parameter sensitivity curves
+    - Key insights and improvement percentages
+
+- **Optimization Presets**
+  - `get_optimization_preset()` for common search configurations:
+    - `"quick"`: 1-3 grams, 2 methods (~6 configs)
+    - `"standard"`: 1-4 grams, 2 methods (~8 configs)
+    - `"thorough"`: 1-5 grams, 3 methods + parameter tuning (~15+ configs)
+    - `"asr"`: 2-3 grams optimized for ASR (~4 configs)
+    - `"minimal"`: Single best configuration (3-gram Kneser-Ney)
+
+- **Result Export & Analysis**
+  - Export complete results to JSON with all metadata
+  - `print_optimization_results()` for loading and re-displaying results
+  - Structured output includes search space, timestamps, all metrics
+  - Helper functions: `_evaluate_config()`, `_evaluate_config_cv()`
+
+- **Documentation & Testing**
+  - Complete user guide: `docs/hyperparameter_optimization.md`
+  - 6 working examples in `examples/hyperparameter_optimization_example.py`
+  - 13 comprehensive tests with 100% pass rate
+  - Integration test using Alice corpus demonstrating real-world usage
+
+### Changed
+- `_evaluate_config()` now returns tuple of (metrics, model) to capture optimized parameters
+- Default search space optimized for practical use cases (1-3 grams vs 1-4)
+- Removed emoji from comparison output (replaced with ASCII markers)
+
+### Dependencies
+- Added optional `[viz]` extra for matplotlib visualization
+- Core functionality remains zero-dependency (pure stdlib)
+
 ## [0.2.0] - 2025-11-19
 
 Major release adding comprehensive n-gram optimization toolkit for first-pass ASR decoding.
