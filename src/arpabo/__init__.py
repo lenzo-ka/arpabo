@@ -20,6 +20,9 @@ Command Line Usage:
 from arpabo.comparison import (
     ModelComparison,
     compare_smoothing_methods,
+    optimize_hyperparameters,
+    plot_optimization_results,
+    print_optimization_results,
     print_smoothing_comparison,
 )
 from arpabo.convert import (
@@ -49,7 +52,7 @@ from arpabo.smoothing import (
 )
 from arpabo.utils import parse_order_spec, parse_range_spec
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = [
     "ArpaBoLM",
     "ConversionError",
@@ -72,9 +75,12 @@ __all__ = [
     "normalize_line",
     "normalize_token",
     "normalize_unicode",
+    "optimize_hyperparameters",
     "parse_order_spec",
     "parse_range_spec",
+    "plot_optimization_results",
     "print_cv_results",
+    "print_optimization_results",
     "print_presets",
     "print_smoothing_comparison",
     "to_kaldi_fst",
