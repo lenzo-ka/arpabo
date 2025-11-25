@@ -920,9 +920,9 @@ def optimize_hyperparameters(
         for order in orders:
             if verbose and show_comparisons and len(all_results) > 0:
                 print()
-                print(f"\n{'='*70}")
-                print(f"Completed order {order-1}, starting order {order}")
-                print(f"{'='*70}")
+                print(f"\n{'=' * 70}")
+                print(f"Completed order {order - 1}, starting order {order}")
+                print(f"{'=' * 70}")
                 _print_intermediate_comparison(all_results, results_by_order, order - 1)
 
             for method in smoothing_methods:
@@ -1079,7 +1079,7 @@ def optimize_hyperparameters(
         if "std_perplexity" in best_config:
             print(f"  Std perplexity: ±{best_config['std_perplexity']:.1f}")
         if "oov_rate" in best_config:
-            print(f"  OOV rate:       {best_config['oov_rate']*100:.2f}%")
+            print(f"  OOV rate:       {best_config['oov_rate'] * 100:.2f}%")
         print(f"  Training time:  {best_config['training_time']:.1f}s")
 
         if show_comparisons:
@@ -1123,7 +1123,7 @@ def _print_method_parameter_comparison(method_results: list[dict], method: str) 
 
     print(f"\n  Parameter comparison for {method}:")
     print(f"  {'Discount':<12} {'PPL':>10} {'Entropy':>10}")
-    print(f"  {'-'*34}")
+    print(f"  {'-' * 34}")
 
     for result in sorted(method_results, key=lambda x: x["perplexity"]):
         discount_str = f"{result['discount_mass']:.2f}" if result["discount_mass"] else "N/A"
@@ -1193,8 +1193,7 @@ def _print_final_summary(
         avg_ppl = sum(r["perplexity"] for r in method_results) / len(method_results)
 
         print(
-            f"{method:<20} {best['order']:<12} {best['perplexity']:>12.1f} "
-            f"{avg_ppl:>12.1f} {len(method_results):>12}"
+            f"{method:<20} {best['order']:<12} {best['perplexity']:>12.1f} {avg_ppl:>12.1f} {len(method_results):>12}"
         )
 
     # Perplexity vs Training Time trade-off
@@ -1211,9 +1210,7 @@ def _print_final_summary(
         if result["discount_mass"]:
             config_name += f" (d={result['discount_mass']:.1f})"
         efficiency = result["perplexity"] / max(result["training_time"], 0.1)
-        print(
-            f"{config_name:<35} {result['perplexity']:>10.1f} " f"{result['training_time']:>10.1f} {efficiency:>12.1f}"
-        )
+        print(f"{config_name:<35} {result['perplexity']:>10.1f} {result['training_time']:>10.1f} {efficiency:>12.1f}")
 
     # Analysis insights
     print()
@@ -1231,7 +1228,7 @@ def _print_final_summary(
     if len(order_winners) > 1:
         orders_sorted = sorted(order_winners.items(), key=lambda x: x[1]["perplexity"])
         best_order_config = orders_sorted[0][1]
-        print(f"• Best order: {best_order_config['order']}-gram " f"(PPL={best_order_config['perplexity']:.1f})")
+        print(f"• Best order: {best_order_config['order']}-gram (PPL={best_order_config['perplexity']:.1f})")
 
         if len(orders_sorted) > 1:
             second_best = orders_sorted[1][1]
@@ -1251,8 +1248,7 @@ def _print_final_summary(
         methods_sorted = sorted(method_winners.items(), key=lambda x: x[1]["perplexity"])
         best_method_config = methods_sorted[0][1]
         print(
-            f"\n• Best smoothing: {best_method_config['smoothing_method']} "
-            f"(PPL={best_method_config['perplexity']:.1f})"
+            f"\n• Best smoothing: {best_method_config['smoothing_method']} (PPL={best_method_config['perplexity']:.1f})"
         )
 
         if len(methods_sorted) > 1:
@@ -1266,8 +1262,8 @@ def _print_final_summary(
     fastest = min(all_results, key=lambda x: x["training_time"])
     slowest = max(all_results, key=lambda x: x["training_time"])
     print(f"\n• Training time range: {fastest['training_time']:.1f}s - {slowest['training_time']:.1f}s")
-    print(f"  Fastest: {fastest['order']}-gram {fastest['smoothing_method']} " f"(PPL={fastest['perplexity']:.1f})")
-    print(f"  Slowest: {slowest['order']}-gram {slowest['smoothing_method']} " f"(PPL={slowest['perplexity']:.1f})")
+    print(f"  Fastest: {fastest['order']}-gram {fastest['smoothing_method']} (PPL={fastest['perplexity']:.1f})")
+    print(f"  Slowest: {slowest['order']}-gram {slowest['smoothing_method']} (PPL={slowest['perplexity']:.1f})")
 
 
 def _evaluate_config(
@@ -1782,7 +1778,7 @@ def print_optimization_results(results: dict, detailed: bool = True) -> None:
     if "std_perplexity" in best:
         print(f"  Std perplexity: ±{best['std_perplexity']:.1f}")
     if "oov_rate" in best:
-        print(f"  OOV rate:       {best['oov_rate']*100:.2f}%")
+        print(f"  OOV rate:       {best['oov_rate'] * 100:.2f}%")
     print(f"  Training time:  {best['training_time']:.1f}s")
 
     if detailed:
