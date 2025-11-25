@@ -26,7 +26,6 @@ venv/
 ENV/
 env/
 .venv
-*.pyc
 
 # IDEs
 .vscode/
@@ -38,25 +37,25 @@ env/
 # Testing
 .pytest_cache/
 .coverage
-.coverage.*
 htmlcov/
 .tox/
-*.cover
 
 # OS
 .DS_Store
 Thumbs.db
 
-# ARPA models (usually large)
+# Generated models and outputs (typically large or temporary)
 *.arpa
 *.lm
 *.lm.bin
 *.fst
+optimized_model.arpa
+temp_*.txt
+
+# Generated plots and results
+*_optimization*.png
+optimization_results_*.json
 
 # Audio files (except test data)
 *.wav
 !tests/data/*.wav
-
-# Development planning docs (work in progress)
-arpabo_feature_suggestions.md
-DEVELOPMENT_PLAN.md
