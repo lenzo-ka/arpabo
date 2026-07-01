@@ -170,13 +170,22 @@ def _handle_conversions(args, output_path=None):
     target_path = output_path or args.output
 
     if args.to_bin:
+        # Prefer the native writer (no external tool); fall back to pocketsphinx_lm_convert for the
+        # pruned-LM case the native writer does not yet handle.
+        from arpabo.convert import to_pocketsphinx_binary_native
+
         try:
-            bin_path = to_pocketsphinx_binary(target_path, verbose=args.verbose)
+            bin_path = to_pocketsphinx_binary_native(target_path, verbose=args.verbose)
             if args.verbose:
-                print(f"Created binary: {bin_path}", file=sys.stderr)
-        except (FileNotFoundError, ConversionError) as e:
-            print(f"Binary conversion failed: {e}", file=sys.stderr)
-            print("Install PocketSphinx to enable binary conversion", file=sys.stderr)
+                print(f"Created binary (native): {bin_path}", file=sys.stderr)
+        except NotImplementedError:
+            try:
+                bin_path = to_pocketsphinx_binary(target_path, verbose=args.verbose)
+                if args.verbose:
+                    print(f"Created binary (pocketsphinx_lm_convert): {bin_path}", file=sys.stderr)
+            except (FileNotFoundError, ConversionError) as e:
+                print(f"Binary conversion failed: {e}", file=sys.stderr)
+                print("Install PocketSphinx to convert pruned LMs", file=sys.stderr)
 
     if args.to_fst:
         try:

@@ -14,7 +14,7 @@ import subprocess
 
 import pytest
 
-from arpabo.kenlm_bin import read_kenlm_bin, write_arpa
+from arpabo.kenlm_bin import LMData, read_kenlm_bin, write_arpa, write_kenlm_bin
 
 FIX = os.path.join(os.path.dirname(__file__), "fixtures", "tiny.arpa")
 
@@ -62,3 +62,42 @@ def test_read_bin_matches_arpa(tmp_path):
         assert set(mine) == set(want), f"order {o+1} n-gram set differs"
         for w in want:
             assert abs(mine[w] - want[w]) < 1e-3, f"order {o+1} {w}: {mine[w]} vs {want[w]}"
+
+
+def _rt_key(rows):
+    return {w: (round(p, 4), round(b, 4) if b is not None else None) for w, p, b in rows}
+
+
+def test_write_read_roundtrip(tmp_path):
+    """arpabo writes a trie binary and reads it back exactly (no external tool)."""
+    lm = LMData(
+        order=2,
+        vocab=["<s>", "</s>", "a", "b"],
+        ngrams=[
+            [(("<s>",), -1.0, -0.5), (("</s>",), -0.8, -0.1),
+             (("a",), -0.6, -0.3), (("b",), -0.7, -0.4)],
+            [(("<s>", "a"), -0.3, None), (("a", "b"), -0.4, None),
+             (("b", "</s>"), -0.2, None), (("a", "</s>"), -0.5, None)],
+        ],
+    )
+    p = str(tmp_path / "t.lm.bin")
+    write_kenlm_bin(lm, p)
+    lm2 = read_kenlm_bin(p)
+    assert lm2.counts == lm.counts
+    for o in range(lm.order):
+        assert _rt_key(lm.ngrams[o]) == _rt_key(lm2.ngrams[o]), f"order {o+1} differs"
+
+
+@pytest.mark.skipif(_find_converter() is None, reason="pocketsphinx_lm_convert not available")
+def test_writer_output_loads_in_pocketsphinx(tmp_path):
+    """A binary arpabo writes is loadable by pocketsphinx (structural validity)."""
+    ps = pytest.importorskip("pocketsphinx")
+    conv = _find_converter()
+    binp = str(tmp_path / "src.lm.bin")
+    subprocess.run([conv, "-i", FIX, "-o", binp], check=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    lm = read_kenlm_bin(binp)                 # a real (tool-made) binary -> LMData
+    mine = str(tmp_path / "mine.lm.bin")
+    write_kenlm_bin(lm, mine)                  # ... rewritten by arpabo
+    ng = ps.NGramModel(ps.Config(), ps.LogMath(), mine)
+    assert ng.size() == lm.order

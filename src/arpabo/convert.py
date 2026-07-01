@@ -47,6 +47,29 @@ def from_pocketsphinx_binary(bin_path: str, arpa_path: Optional[str] = None,
     return arpa_path
 
 
+def to_pocketsphinx_binary_native(arpa_path: str, bin_path: Optional[str] = None,
+                                  logbase: float = 1.0001, verbose: bool = False) -> str:
+    """Convert ARPA -> PocketSphinx trie binary NATIVELY (no external tool).
+
+    Uses ``arpabo.kenlm_bin`` to build the bit-packed trie directly, so no
+    ``pocketsphinx_lm_convert`` is required. Currently supports complete-context LMs
+    (raises ``NotImplementedError`` on a pruned LM needing synthesized entries — use
+    :func:`to_pocketsphinx_binary` for those). Returns the output binary path.
+    """
+    from arpabo.kenlm_bin import arpa_to_kenlm_bin
+
+    if bin_path is None:
+        bin_path = arpa_path.replace(".arpa", ".lm.bin")
+        if bin_path == arpa_path:
+            bin_path = arpa_path + ".lm.bin"
+    if verbose:
+        print(f"Writing trie binary (native) {arpa_path} -> {bin_path} ...")
+    lm = arpa_to_kenlm_bin(arpa_path, bin_path, logbase=logbase)
+    if verbose:
+        print(f"Wrote {bin_path}: order {lm.order}, counts {lm.counts}")
+    return bin_path
+
+
 def find_pocketsphinx_converter() -> Optional[str]:
     """Find pocketsphinx_lm_convert executable.
 
