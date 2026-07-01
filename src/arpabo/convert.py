@@ -1,7 +1,10 @@
 """Binary format conversion utilities
 
 This module provides helper functions to convert ARPA models to binary formats
-using external tools (PocketSphinx, Kaldi, etc.)
+using external tools (PocketSphinx, Kaldi, etc.), and — NATIVELY, no external tool —
+to read a PocketSphinx / KenLM trie binary back to ARPA (see ``kenlm_bin``). The
+native reader is necessary because PocketSphinx's own bin->ARPA path
+(``pocketsphinx_lm_convert``, ``NGramModel.write``) crashes on some binaries.
 """
 
 import shutil
@@ -14,6 +17,34 @@ class ConversionError(Exception):
     """Raised when conversion to binary format fails"""
 
     pass
+
+
+def from_pocketsphinx_binary(bin_path: str, arpa_path: Optional[str] = None,
+                             logbase: float = 1.0001, verbose: bool = False) -> str:
+    """Convert a PocketSphinx trie-binary LM to ARPA — NATIVELY (no external tool).
+
+    Reads the KenLM bit-packed trie directly (``arpabo.kenlm_bin``) and writes ARPA.
+    Unlike ``pocketsphinx_lm_convert``/``NGramModel.write``, this does not crash on
+    binaries whose header n-gram counts are inconsistent (it enumerates the actual
+    n-grams). Returns the output ARPA path.
+
+    Args:
+        bin_path: Path to the ``.lm.bin`` (a "Trie Language Model").
+        arpa_path: Output path (default: replace ``.lm.bin`` / ``.bin`` with ``.arpa``).
+        logbase: logmath base the binary was built with (PocketSphinx default 1.0001).
+    """
+    from arpabo.kenlm_bin import kenlm_bin_to_arpa
+
+    if arpa_path is None:
+        arpa_path = bin_path.replace(".lm.bin", ".arpa").replace(".bin", ".arpa")
+        if arpa_path == bin_path:
+            arpa_path = bin_path + ".arpa"
+    if verbose:
+        print(f"Reading trie binary {bin_path} -> {arpa_path} ...")
+    lm = kenlm_bin_to_arpa(bin_path, arpa_path, logbase=logbase)
+    if verbose:
+        print(f"Wrote {arpa_path}: order {lm.order}, counts {lm.counts}")
+    return arpa_path
 
 
 def find_pocketsphinx_converter() -> Optional[str]:

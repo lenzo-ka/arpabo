@@ -107,6 +107,9 @@ def _create_parser():
     )
     parser.add_argument("--to-bin", action="store_true", help="convert to PocketSphinx binary (.lm.bin)")
     parser.add_argument("--to-fst", action="store_true", help="convert to Kaldi FST (.fst)")
+    parser.add_argument("--from-bin", type=str, metavar="LM_BIN",
+                        help="read a PocketSphinx/KenLM trie binary and write ARPA (to -o or stdout); "
+                             "native, no external tool")
     return parser
 
 
@@ -325,6 +328,20 @@ def main() -> None:
     # Handle eval-only mode first (doesn't need other validation)
     if args.eval_only:
         _handle_eval_only(args)
+        return
+
+    # Handle binary -> ARPA conversion (native KenLM trie reader; no external tool)
+    if args.from_bin:
+        from arpabo.kenlm_bin import read_kenlm_bin, write_arpa
+
+        lm = read_kenlm_bin(args.from_bin)
+        if args.verbose:
+            print(f"Read {args.from_bin}: order {lm.order}, counts {lm.counts}", file=sys.stderr)
+        if args.output:
+            with open(args.output, "w") as fh:
+                write_arpa(lm, fh)
+        else:
+            write_arpa(lm, sys.stdout)
         return
 
     # Apply preset if specified
