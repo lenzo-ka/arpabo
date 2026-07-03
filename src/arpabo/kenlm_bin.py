@@ -27,12 +27,12 @@ import struct
 from dataclasses import dataclass, field
 from math import log10
 
-TRIE_HDR = b"Trie Language Model"          # 19 bytes, not NUL-terminated
-_DEFAULT_LOGBASE = 1.0001                    # pocketsphinx logmath default (shift 0)
-_PROB_BITS = 16                              # fixed 16-bit quantized prob/backoff tables
+TRIE_HDR = b"Trie Language Model"  # 19 bytes, not NUL-terminated
+_DEFAULT_LOGBASE = 1.0001  # pocketsphinx logmath default (shift 0)
+_PROB_BITS = 16  # fixed 16-bit quantized prob/backoff tables
 _BO_BITS = 16
-_MID_TABLE = (1 << _PROB_BITS) + (1 << _BO_BITS)   # 131072 floats per middle order
-_LONG_TABLE = 1 << _PROB_BITS                       # 65536 floats for the longest order
+_MID_TABLE = (1 << _PROB_BITS) + (1 << _BO_BITS)  # 131072 floats per middle order
+_LONG_TABLE = 1 << _PROB_BITS  # 65536 floats for the longest order
 
 
 @dataclass
@@ -64,7 +64,7 @@ def _read_bits(mem: bytes, bit_offset: int, width: int) -> int:
         return 0
     byte = bit_offset >> 3
     shift = bit_offset & 7
-    chunk = int.from_bytes(mem[byte:byte + 8].ljust(8, b"\x00"), "little")
+    chunk = int.from_bytes(mem[byte : byte + 8].ljust(8, b"\x00"), "little")
     return (chunk >> shift) & ((1 << width) - 1)
 
 
@@ -79,7 +79,7 @@ def read_kenlm_bin(path: str, logbase: float = _DEFAULT_LOGBASE) -> LMData:
         data = fh.read()
     pos = 0
 
-    hdr = data[pos:pos + len(TRIE_HDR)]
+    hdr = data[pos : pos + len(TRIE_HDR)]
     pos += len(TRIE_HDR)
     if hdr != TRIE_HDR:
         raise ValueError(f"not a PocketSphinx trie LM (header={hdr!r})")
@@ -103,15 +103,14 @@ def read_kenlm_bin(path: str, logbase: float = _DEFAULT_LOGBASE) -> LMData:
 
     # ---- ngram_mem: bit-packed middle arrays (orders 2..order-1) then longest ----
     word_bits = _required_bits(counts[0])
-    mids = []          # per middle order: byte offset, total_bits, next_bits, quant table base
+    mids = []  # per middle order: byte offset, total_bits, next_bits, quant table base
     cur = 0
-    for m in range(2, order):                       # middle order m -> array index m-2
+    for m in range(2, order):  # middle order m -> array index m-2
         entries = counts[m - 1]
         next_bits = _required_bits(counts[m])
         total_bits = word_bits + _PROB_BITS + _BO_BITS + next_bits
         size = ((1 + entries) * total_bits + 7) // 8 + 8
-        mids.append({"off": cur, "total_bits": total_bits, "next_bits": next_bits,
-                     "qbase": (m - 2) * _MID_TABLE})
+        mids.append({"off": cur, "total_bits": total_bits, "next_bits": next_bits, "qbase": (m - 2) * _MID_TABLE})
         cur += size
     long_off = long_total = 0
     if order > 1:
@@ -119,13 +118,13 @@ def read_kenlm_bin(path: str, logbase: float = _DEFAULT_LOGBASE) -> LMData:
         long_total = word_bits + _PROB_BITS
         long_off = cur
         cur += ((1 + l_entries) * long_total + 7) // 8 + 8
-    ngram_mem = data[pos:pos + cur]
+    ngram_mem = data[pos : pos + cur]
     pos += cur
 
     # ---- word strings: uint32 total bytes, then that many NUL-terminated ASCII words ----
     (kbytes,) = struct.unpack_from("<I", data, pos)
     pos += 4
-    block = data[pos:pos + kbytes]
+    block = data[pos : pos + kbytes]
     vocab = [w.decode("latin-1") for w in block.split(b"\x00")[:n_ug]]
 
     long_qbase = (order - 2) * _MID_TABLE
@@ -152,7 +151,7 @@ def read_kenlm_bin(path: str, logbase: float = _DEFAULT_LOGBASE) -> LMData:
 
     # descend the reverse trie: root unigram = LAST word; prepend earlier context words.
     def descend(path: list[int], begin: int, end: int, depth: int) -> None:
-        if depth == order - 1:                       # children are longest (top-order leaves)
+        if depth == order - 1:  # children are longest (top-order leaves)
             for ptr in range(begin, end):
                 wid, lp = long_entry(ptr)
                 words = tuple(vocab[x] for x in reversed(path + [wid]))
@@ -161,7 +160,7 @@ def read_kenlm_bin(path: str, logbase: float = _DEFAULT_LOGBASE) -> LMData:
             mi = depth - 1
             for ptr in range(begin, end):
                 wid, lp, lbo, cbeg = mid_entry(mi, ptr)
-                _, _, _, cend = mid_entry(mi, ptr + 1)   # end = next slot's next-pointer
+                _, _, _, cend = mid_entry(mi, ptr + 1)  # end = next slot's next-pointer
                 words = tuple(vocab[x] for x in reversed(path + [wid]))
                 out[depth].append((words, lp, lbo))
                 descend(path + [wid], cbeg, cend, depth + 1)
@@ -218,7 +217,7 @@ def read_arpa(path: str) -> LMData:
                     lp = float(p[0])
                 except ValueError:
                     continue
-                words = tuple(p[1:1 + cur])
+                words = tuple(p[1 : 1 + cur])
                 bo = None
                 if len(p) == cur + 2:
                     try:
@@ -281,9 +280,9 @@ def _write_bits(buf: bytearray, bit_offset: int, width: int, value: int) -> None
         return
     byte = bit_offset >> 3
     shift = bit_offset & 7
-    chunk = int.from_bytes(buf[byte:byte + 8], "little")
+    chunk = int.from_bytes(buf[byte : byte + 8], "little")
     chunk |= (value & ((1 << width) - 1)) << shift
-    buf[byte:byte + 8] = chunk.to_bytes(8, "little")
+    buf[byte : byte + 8] = chunk.to_bytes(8, "little")
 
 
 def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) -> None:
@@ -296,20 +295,19 @@ def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) ->
     Not byte-identical to PocketSphinx's own output (that needs its truncating sort comparator), but a valid,
     round-trippable, PocketSphinx-loadable binary.
     """
-    inv = 1.0 / log10(logbase)                  # log10 value -> stored logmath-internal float
+    inv = 1.0 / log10(logbase)  # log10 value -> stored logmath-internal float
     order = lm.order
     vocab = [w[0] for (w, _p, _b) in lm.ngrams[0]]
     wid = {w: i for i, w in enumerate(vocab)}
     n_ug = len(vocab)
 
-    def rq(x):                                  # requantize None-safe log10 -> stored float
+    def rq(x):  # requantize None-safe log10 -> stored float
         return 0.0 if x is None else x * inv
 
     # reversed, id-keyed, sorted entries per order o (2..order): (rev_ids, prob_stored, bo_stored)
     arr: dict[int, list] = {}
     for o in range(2, order + 1):
-        es = [(tuple(wid[w] for w in reversed(words)), lp * inv, rq(bo))
-              for (words, lp, bo) in lm.ngrams[o - 1]]
+        es = [(tuple(wid[w] for w in reversed(words)), lp * inv, rq(bo)) for (words, lp, bo) in lm.ngrams[o - 1]]
         es.sort(key=lambda e: e[0])
         arr[o] = es
     out_counts = [n_ug] + [len(arr[o]) for o in range(2, order + 1)]
@@ -319,12 +317,12 @@ def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) ->
     def child_next(parent_entries, child_entries, plen):
         """next[i] = begin index of parent i's children (child prefix rev_ids[:plen]); + sentinel end."""
         from collections import Counter
+
         cc = Counter(e[0][:plen] for e in child_entries)
         pset = {pe[0] for pe in parent_entries}
         for pref in cc:
             if pref not in pset:
-                raise NotImplementedError(
-                    "pruned LM: missing intermediate context (dummy entries) not yet supported")
+                raise NotImplementedError("pruned LM: missing intermediate context (dummy entries) not yet supported")
         nxt, cum = [], 0
         for pe in parent_entries:
             nxt.append(cum)
@@ -334,6 +332,7 @@ def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) ->
 
     # ---- unigram next pointers (children = order-2 entries grouped by rev_ids[0]) ----
     from collections import Counter
+
     c2 = Counter(e[0][0] for e in arr.get(2, []))
     ug_next, cum = [], 0
     for w in range(n_ug):
@@ -343,7 +342,7 @@ def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) ->
 
     # ---- quant tables + per-entry indices ----
     values: list[float] = []
-    mid_tables = {}       # order -> (prob_centers, bo_centers)
+    mid_tables = {}  # order -> (prob_centers, bo_centers)
     for m in range(2, order):
         pc = _make_bins([e[1] for e in arr[m]])
         bc = _make_bins([e[2] for e in arr[m]])
@@ -355,7 +354,7 @@ def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) ->
 
     # ---- bit-pack each order's array ----
     ngram_mem = bytearray()
-    for m in range(2, order):                          # middle order m -> m-grams, next into (m+1)-grams
+    for m in range(2, order):  # middle order m -> m-grams, next into (m+1)-grams
         entries = arr[m]
         next_bits = _required_bits(out_counts[m])
         total_bits = word_bits + 2 * _PROB_BITS + next_bits
@@ -364,13 +363,13 @@ def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) ->
         pc, bc = mid_tables[m]
         for i, (rev, ps, bs) in enumerate(entries):
             b = i * total_bits
-            _write_bits(buf, b, word_bits, rev[-1])                       # the new (deepest) word
+            _write_bits(buf, b, word_bits, rev[-1])  # the new (deepest) word
             _write_bits(buf, b + word_bits, _BO_BITS, _encode(bc, bs))
             _write_bits(buf, b + word_bits + _BO_BITS, _PROB_BITS, _encode(pc, ps))
             _write_bits(buf, b + word_bits + 2 * _PROB_BITS, next_bits, nxt[i])
         _write_bits(buf, len(entries) * total_bits + word_bits + 2 * _PROB_BITS, next_bits, nxt[-1])  # sentinel
         ngram_mem += buf
-    if order > 1:                                      # longest order (top): word + prob, no next
+    if order > 1:  # longest order (top): word + prob, no next
         entries = arr[order]
         total_bits = word_bits + _PROB_BITS
         buf = bytearray(((1 + len(entries)) * total_bits + 7) // 8 + 8)
@@ -386,13 +385,13 @@ def write_kenlm_bin(lm: LMData, path: str, logbase: float = _DEFAULT_LOGBASE) ->
     out += bytes([order])
     out += struct.pack(f"<{order}I", *out_counts)
     if order > 1:
-        out += struct.pack("<i", 1)                    # quant-type dummy
+        out += struct.pack("<i", 1)  # quant-type dummy
         out += struct.pack(f"<{len(values)}f", *values)
     probs0 = {w[0]: (lp, bo) for (w, lp, bo) in lm.ngrams[0]}
     for i in range(n_ug):
         lp, bo = probs0[vocab[i]]
         out += struct.pack("<ffI", lp * inv, rq(bo), ug_next[i])
-    out += struct.pack("<ffI", 0.0, 0.0, ug_next[n_ug])   # sentinel unigram
+    out += struct.pack("<ffI", 0.0, 0.0, ug_next[n_ug])  # sentinel unigram
     out += ngram_mem
     blob = b"".join(w.encode("latin-1") + b"\x00" for w in vocab)
     out += struct.pack("<I", len(blob)) + blob

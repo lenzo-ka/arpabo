@@ -64,9 +64,9 @@ def test_context_distributions_sum_to_one(tmp_path, smoothing, order):
     assert contexts, "model produced no contexts"
     for ctx in contexts:
         total = model.context_sum(ctx)
-        assert total == pytest.approx(1.0, abs=FILE_TOL), (
-            f"{smoothing} order={order} context={ctx!r} sums to {total:.6f}, not 1.0"
-        )
+        assert total == pytest.approx(
+            1.0, abs=FILE_TOL
+        ), f"{smoothing} order={order} context={ctx!r} sums to {total:.6f}, not 1.0"
 
 
 @pytest.mark.parametrize("smoothing", SMOOTHERS)

@@ -19,8 +19,9 @@ class ConversionError(Exception):
     pass
 
 
-def from_pocketsphinx_binary(bin_path: str, arpa_path: Optional[str] = None,
-                             logbase: float = 1.0001, verbose: bool = False) -> str:
+def from_pocketsphinx_binary(
+    bin_path: str, arpa_path: Optional[str] = None, logbase: float = 1.0001, verbose: bool = False
+) -> str:
     """Convert a PocketSphinx trie-binary LM to ARPA — NATIVELY (no external tool).
 
     Reads the KenLM bit-packed trie directly (``arpabo.kenlm_bin``) and writes ARPA.
@@ -47,8 +48,9 @@ def from_pocketsphinx_binary(bin_path: str, arpa_path: Optional[str] = None,
     return arpa_path
 
 
-def to_pocketsphinx_binary_native(arpa_path: str, bin_path: Optional[str] = None,
-                                  logbase: float = 1.0001, verbose: bool = False) -> str:
+def to_pocketsphinx_binary_native(
+    arpa_path: str, bin_path: Optional[str] = None, logbase: float = 1.0001, verbose: bool = False
+) -> str:
     """Convert ARPA -> PocketSphinx trie binary NATIVELY (no external tool).
 
     Uses ``arpabo.kenlm_bin`` to build the bit-packed trie directly, so no

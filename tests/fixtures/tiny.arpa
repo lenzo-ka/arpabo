@@ -1,4 +1,4 @@
-Corpus: 5 sentences; 27 words, 9 1-grams, 16 2-grams, 16 3-grams, with fixed discount mass None with unicode normalization 
+Corpus: 5 sentences; 27 words, 9 1-grams, 16 2-grams, 16 3-grams, with fixed discount mass None with unicode normalization
 
 \data\
 ngram 1=9

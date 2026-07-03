@@ -30,19 +30,20 @@ def _find_converter():
 def _parse_arpa(path):
     """{order: {word_tuple: log10_prob}} from an ARPA file."""
     out, cur = {}, 0
-    for line in open(path):
-        s = line.strip()
-        if s.startswith("\\") and s.endswith("-grams:"):
-            cur = int(s[1:].split("-")[0])
-            out[cur] = {}
-        elif cur and s and (s[0].isdigit() or s[0] == "-"):
-            p = s.split()
-            try:
-                lp = float(p[0])
-            except ValueError:
-                continue
-            # trailing back-off field (if any) is not a word; words = the `cur` tokens after prob
-            out[cur][tuple(p[1 : 1 + cur])] = lp
+    with open(path) as fh:
+        for line in fh:
+            s = line.strip()
+            if s.startswith("\\") and s.endswith("-grams:"):
+                cur = int(s[1:].split("-")[0])
+                out[cur] = {}
+            elif cur and s and (s[0].isdigit() or s[0] == "-"):
+                p = s.split()
+                try:
+                    lp = float(p[0])
+                except ValueError:
+                    continue
+                # trailing back-off field (if any) is not a word; words = the `cur` tokens after prob
+                out[cur][tuple(p[1 : 1 + cur])] = lp
     return out
 
 
@@ -51,8 +52,7 @@ def test_read_bin_matches_arpa(tmp_path):
     """Convert the tiny ARPA to a trie binary, read it back, and compare every n-gram."""
     conv = _find_converter()
     binp = str(tmp_path / "tiny.lm.bin")
-    subprocess.run([conv, "-i", FIX, "-o", binp], check=True,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run([conv, "-i", FIX, "-o", binp], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     lm = read_kenlm_bin(binp)
     orig = _parse_arpa(FIX)
     assert lm.order == max(orig)
@@ -74,10 +74,13 @@ def test_write_read_roundtrip(tmp_path):
         order=2,
         vocab=["<s>", "</s>", "a", "b"],
         ngrams=[
-            [(("<s>",), -1.0, -0.5), (("</s>",), -0.8, -0.1),
-             (("a",), -0.6, -0.3), (("b",), -0.7, -0.4)],
-            [(("<s>", "a"), -0.3, None), (("a", "b"), -0.4, None),
-             (("b", "</s>"), -0.2, None), (("a", "</s>"), -0.5, None)],
+            [(("<s>",), -1.0, -0.5), (("</s>",), -0.8, -0.1), (("a",), -0.6, -0.3), (("b",), -0.7, -0.4)],
+            [
+                (("<s>", "a"), -0.3, None),
+                (("a", "b"), -0.4, None),
+                (("b", "</s>"), -0.2, None),
+                (("a", "</s>"), -0.5, None),
+            ],
         ],
     )
     p = str(tmp_path / "t.lm.bin")
@@ -94,10 +97,9 @@ def test_writer_output_loads_in_pocketsphinx(tmp_path):
     ps = pytest.importorskip("pocketsphinx")
     conv = _find_converter()
     binp = str(tmp_path / "src.lm.bin")
-    subprocess.run([conv, "-i", FIX, "-o", binp], check=True,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    lm = read_kenlm_bin(binp)                 # a real (tool-made) binary -> LMData
+    subprocess.run([conv, "-i", FIX, "-o", binp], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    lm = read_kenlm_bin(binp)  # a real (tool-made) binary -> LMData
     mine = str(tmp_path / "mine.lm.bin")
-    write_kenlm_bin(lm, mine)                  # ... rewritten by arpabo
+    write_kenlm_bin(lm, mine)  # ... rewritten by arpabo
     ng = ps.NGramModel(ps.Config(), ps.LogMath(), mine)
     assert ng.size() == lm.order

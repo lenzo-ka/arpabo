@@ -108,9 +108,12 @@ def _create_parser():
     )
     parser.add_argument("--to-bin", action="store_true", help="convert to PocketSphinx binary (.lm.bin)")
     parser.add_argument("--to-fst", action="store_true", help="convert to Kaldi FST (.fst)")
-    parser.add_argument("--from-bin", type=str, metavar="LM_BIN",
-                        help="read a PocketSphinx/KenLM trie binary and write ARPA (to -o or stdout); "
-                             "native, no external tool")
+    parser.add_argument(
+        "--from-bin",
+        type=str,
+        metavar="LM_BIN",
+        help="read a PocketSphinx/KenLM trie binary and write ARPA (to -o or stdout); native, no external tool",
+    )
     return parser
 
 
