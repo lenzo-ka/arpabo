@@ -114,7 +114,7 @@ class TestCompute:
 
     def test_compute_without_corpus(self):
         lm = ArpaBoLM(verbose=False)
-        with pytest.raises(SystemExit):
+        with pytest.raises(ValueError):
             lm.compute()
 
     def test_compute_populates_probs(self):

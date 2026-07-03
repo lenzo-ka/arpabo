@@ -74,6 +74,47 @@ class TestArpaRead:
 
         os.unlink(arpa_path)
 
+    def test_roundtrip_preserves_probs_and_backoffs(self, tmp_path):
+        """A load->write cycle must reproduce every log-prob AND backoff weight."""
+        from tests.arpa_eval import parse_arpa
+
+        lm = ArpaBoLM(max_order=3, verbose=False)
+        lm.read_corpus(StringIO("the cat sat on the mat\nthe dog sat\na cat ran\nthe mat\n"))
+        lm.compute()
+
+        first = tmp_path / "first.arpa"
+        lm.write_file(str(first))
+
+        # Load it back and write again.
+        reloaded = ArpaBoLM.from_arpa_file(str(first), verbose=False)
+        second = tmp_path / "second.arpa"
+        reloaded.write_file(str(second))
+
+        a = parse_arpa(str(first))
+        b = parse_arpa(str(second))
+        assert a.logprob.keys() == b.logprob.keys()
+        for ngram, lp in a.logprob.items():
+            assert b.logprob[ngram] == lp
+        assert a.logbow.keys() == b.logbow.keys()
+        for ctx, bow in a.logbow.items():
+            assert b.logbow[ctx] == bow
+
+    def test_numeric_vocabulary_tokens_not_corrupted(self, tmp_path):
+        """Vocabulary tokens that look like numbers must survive load (finding C6)."""
+        lm = ArpaBoLM(max_order=2, verbose=False)
+        lm.read_corpus(StringIO("in 1998 we met\nwe met in 1998\nin 2001 again\n"))
+        lm.compute()
+
+        arpa = tmp_path / "m.arpa"
+        lm.write_file(str(arpa))
+        reloaded = ArpaBoLM.from_arpa_file(str(arpa), verbose=False)
+
+        # The numeric tokens are real vocabulary, not backoff weights.
+        assert "1998" in reloaded.probs[0]
+        assert "2001" in reloaded.probs[0]
+        # The bigram (in, 1998) must survive as a bigram, not be swallowed.
+        assert reloaded.probs[1]["in"]["1998"] > 0
+
     def test_load_and_update(self):
         # Create initial model
         lm1 = ArpaBoLM(verbose=False)

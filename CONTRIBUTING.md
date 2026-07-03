@@ -1,6 +1,6 @@
-# Contributing to ArpaLM
+# Contributing to arpabo
 
-Thank you for your interest in contributing to ArpaLM!
+Thank you for your interest in contributing to arpabo!
 
 ## Development Setup
 
@@ -121,14 +121,12 @@ class MyMethodSmoother(SmoothingMethod):
 
 For maintainers:
 
-1. Update version in `pyproject.toml`
+1. Update the version in `pyproject.toml` and `src/arpabo/__init__.py` (keep them in sync)
 2. Update `CHANGELOG.md`
-3. Create git tag: `git tag v0.2.0`
-4. Push tag: `git push origin v0.2.0`
-5. GitHub Actions will auto-publish to PyPI
+3. Create git tag: `git tag v0.4.0`
+4. Push tag: `git push origin v0.4.0`
+5. Publish a GitHub Release for the tag; the publish workflow uploads to PyPI
 
 ## Questions?
 
 Open an issue or discussion on GitHub.
-EOF
-cat CONTRIBUTING.md

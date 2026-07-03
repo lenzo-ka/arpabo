@@ -1,0 +1,56 @@
+Corpus: 5 sentences; 27 words, 9 1-grams, 16 2-grams, 16 3-grams, with fixed discount mass None with unicode normalization
+
+\data\
+ngram 1=9
+ngram 2=16
+ngram 3=16
+
+\1-grams:
+-0.7324 </s> 0.0000
+-0.7324 <s> 0.0000
+-1.0792 a 0.0000
+-1.0792 cat 0.0000
+-0.9542 dog 0.0000
+-1.0792 fast 0.0000
+-0.9542 ran 0.0000
+-1.0792 sat 0.0000
+-0.9542 the 0.0000
+
+\2-grams:
+-0.8239 <s> a 0.0000
+-0.2218 <s> the 0.0000
+-0.4393 a cat 0.0000
+-0.4393 a dog 0.0000
+-0.4393 cat ran 0.0000
+-0.4393 cat sat 0.0000
+-0.6021 dog ran 0.0000
+-0.6154 dog sat 0.0000
+-0.4393 fast </s> 0.0000
+-0.4393 fast dog 0.0000
+-0.6021 ran </s> 0.0000
+-0.6154 ran fast 0.0000
+-0.4260 sat </s> 0.0000
+-0.6154 the cat 0.0000
+-0.6154 the dog 0.0000
+-0.6154 the fast 0.0000
+
+\3-grams:
+-1.1761 <s> a cat
+-1.1761 <s> a dog
+-1.3522 <s> the cat
+-1.3522 <s> the dog
+-1.3522 <s> the fast
+-0.8751 a cat ran
+-0.8751 a dog sat
+-0.8751 cat ran fast
+-0.8751 cat sat </s>
+0.0000 dog ran </s>
+-0.8751 dog sat </s>
+-0.8751 fast dog ran
+-0.8751 ran fast </s>
+-0.8751 the cat sat
+-0.8751 the dog ran
+-0.8751 the fast dog
+
+
+\end\

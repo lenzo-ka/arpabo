@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-"""Command-line interface for ArpaLM"""
+"""Command-line interface for arpabo"""
 
 import argparse
 import os
 import sys
+from typing import Optional
 
 from arpabo.comparison import compare_smoothing_methods, print_smoothing_comparison
 from arpabo.convert import ConversionError, to_kaldi_fst, to_pocketsphinx_binary
@@ -18,7 +19,7 @@ def _create_parser():
     """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
         description="Create an ARPA language model with smoothing (Katz backoff, Good-Turing, Kneser-Ney)",
-        epilog="Convert to binary: pocketsphinx_lm_convert -i model.arpa -o model.lm.bin",
+        epilog="Convert to binary: arpabo model.arpa --to-bin  (native, no external tool)",
     )
     parser.add_argument("files", nargs="*", help="input text files")
     parser.add_argument("--demo", action="store_true", help="use example corpus (Alice in Wonderland)")
@@ -43,7 +44,7 @@ def _create_parser():
     parser.add_argument("-n", "--token-norm", dest="token_norm", action="store_true", help="normalize tokens")
     parser.add_argument("-o", "--output", type=str, help="output file (default: stdout)")
     parser.add_argument("-v", "--verbose", action="store_true", help="verbose output to stderr")
-    parser.add_argument("-m", "--max-order", type=int, default=3, help="n-gram order (default: 3)")
+    parser.add_argument("-m", "--max-order", type=int, default=None, help="n-gram order (default: 3)")
     parser.add_argument(
         "--orders",
         type=str,
@@ -53,7 +54,7 @@ def _create_parser():
         "-s",
         "--smoothing-method",
         type=str,
-        default="good_turing",
+        default=None,
         choices=["auto", "fixed", "mle", "good_turing", "kneser_ney"],
         help="smoothing method (default: good_turing)",
     )
@@ -61,7 +62,7 @@ def _create_parser():
         "--preset",
         type=str,
         choices=["first-pass", "rescoring", "balanced", "fast", "accurate"],
-        help="use preset configuration (overrides -m and -s)",
+        help="use preset configuration (sets -m and -s unless given explicitly)",
     )
     parser.add_argument(
         "--list-presets",
@@ -107,6 +108,12 @@ def _create_parser():
     )
     parser.add_argument("--to-bin", action="store_true", help="convert to PocketSphinx binary (.lm.bin)")
     parser.add_argument("--to-fst", action="store_true", help="convert to Kaldi FST (.fst)")
+    parser.add_argument(
+        "--from-bin",
+        type=str,
+        metavar="LM_BIN",
+        help="read a PocketSphinx/KenLM trie binary and write ARPA (to -o or stdout); native, no external tool",
+    )
     return parser
 
 
@@ -167,13 +174,22 @@ def _handle_conversions(args, output_path=None):
     target_path = output_path or args.output
 
     if args.to_bin:
+        # Prefer the native writer (no external tool); fall back to pocketsphinx_lm_convert for the
+        # pruned-LM case the native writer does not yet handle.
+        from arpabo.convert import to_pocketsphinx_binary_native
+
         try:
-            bin_path = to_pocketsphinx_binary(target_path, verbose=args.verbose)
+            bin_path = to_pocketsphinx_binary_native(target_path, verbose=args.verbose)
             if args.verbose:
-                print(f"Created binary: {bin_path}", file=sys.stderr)
-        except (FileNotFoundError, ConversionError) as e:
-            print(f"Binary conversion failed: {e}", file=sys.stderr)
-            print("Install PocketSphinx to enable binary conversion", file=sys.stderr)
+                print(f"Created binary (native): {bin_path}", file=sys.stderr)
+        except NotImplementedError:
+            try:
+                bin_path = to_pocketsphinx_binary(target_path, verbose=args.verbose)
+                if args.verbose:
+                    print(f"Created binary (pocketsphinx_lm_convert): {bin_path}", file=sys.stderr)
+            except (FileNotFoundError, ConversionError) as e:
+                print(f"Binary conversion failed: {e}", file=sys.stderr)
+                print("Install PocketSphinx to convert pruned LMs", file=sys.stderr)
 
     if args.to_fst:
         try:
@@ -312,35 +328,55 @@ def _handle_uniform(args):
     _handle_conversions(args)
 
 
-def main() -> None:
-    """Main entry point for the arpalm command-line tool"""
+def main(argv: Optional[list] = None) -> int:
+    """Main entry point for the arpabo command-line tool."""
     parser = _create_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Handle list-presets mode first
     if args.list_presets:
         print_presets()
-        return
+        return 0
 
     # Handle eval-only mode first (doesn't need other validation)
     if args.eval_only:
         _handle_eval_only(args)
-        return
+        return 0
 
-    # Apply preset if specified
+    # Handle binary -> ARPA conversion (native KenLM trie reader; no external tool)
+    if args.from_bin:
+        from arpabo.kenlm_bin import read_kenlm_bin, write_arpa
+
+        lm = read_kenlm_bin(args.from_bin)
+        if args.verbose:
+            print(f"Read {args.from_bin}: order {lm.order}, counts {lm.counts}", file=sys.stderr)
+        if args.output:
+            with open(args.output, "w") as fh:
+                write_arpa(lm, fh)
+        else:
+            write_arpa(lm, sys.stdout)
+        return 0
+
+    # Apply preset if specified. Explicit -m/-s (non-None) always win; the preset
+    # only fills in values the user left unset.
     if args.preset:
         preset_config = get_preset(args.preset)
 
-        # Override args with preset values (if not explicitly set by user)
-        if args.max_order == 3:  # Default value, not explicitly set
+        if args.max_order is None:
             args.max_order = preset_config["recommended_order"]
-        if args.smoothing_method == "good_turing":  # Default value
+        if args.smoothing_method is None:
             args.smoothing_method = preset_config["smoothing_method"]
 
         if args.verbose:
             print(f"Using preset: {args.preset}", file=sys.stderr)
             print(f"  {preset_config['description']}", file=sys.stderr)
             print(f"  Order: {args.max_order}, Smoothing: {args.smoothing_method}", file=sys.stderr)
+
+    # Fill in true defaults for anything still unset.
+    if args.max_order is None:
+        args.max_order = 3
+    if args.smoothing_method is None:
+        args.smoothing_method = "good_turing"
 
     # Validate arguments
     if args.case and args.case not in ["lower", "upper"]:
@@ -362,7 +398,7 @@ def main() -> None:
     # Handle uniform mode
     if args.uniform:
         _handle_uniform(args)
-        return
+        return 0
 
     if not args.load_model and not args.files and args.text is None and not args.demo:
         parser.error("Input must be specified with input files, --text, or --demo")
@@ -392,12 +428,12 @@ def main() -> None:
         )
 
         print_smoothing_comparison(results, test_file=args.eval, max_order=args.max_order)
-        return
+        return 0
 
     # Handle multi-order training mode
     if args.orders:
         _handle_multi_order_training(args)
-        return
+        return 0
 
     # Build or load model
     lm = _load_or_create_model(args)
@@ -427,45 +463,48 @@ def main() -> None:
             reduction = (1 - after_stats["vocab_size"] / before_stats["vocab_size"]) * 100
             print(f"  Reduction: {reduction:.1f}%", file=sys.stderr)
 
-    # Handle different output modes
+    # --stats and --debug are terminal report modes: their output IS the
+    # deliverable, so it goes to stdout, and a model is written only when -o is
+    # given. --eval is a diagnostic on a normal build, so its report goes to
+    # stderr, keeping stdout a clean ARPA model.
+    terminal_report_mode = args.stats or args.debug
+
     if args.stats:
-        # Use new print_statistics with optional backoff analysis
-        lm.print_statistics(test_file=args.backoff)
-        return
+        lm.print_statistics(test_file=args.backoff, file=sys.stdout)
 
     if args.debug:
         lm.interactive_debug()
-        return
 
-    # Evaluate if requested
     if args.eval:
         if args.verbose:
             print(f"\nEvaluating on {args.eval}...", file=sys.stderr)
         with open(args.eval) as f:
             results = lm.perplexity(f, oov_handling=args.oov_handling)
-        lm.print_perplexity_results(results, test_file=args.eval)
+        lm.print_perplexity_results(results, test_file=args.eval, file=sys.stderr)
 
-        # Show backoff analysis if requested
         if args.backoff:
-            print("\nBackoff Analysis")
-            print("=" * 50)
+            print("\nBackoff Analysis", file=sys.stderr)
+            print("=" * 50, file=sys.stderr)
             with open(args.backoff) as f:
                 backoff = lm.backoff_rate(f)
-            print(f"Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%")
-            print()
-            print("Query resolution:")
+            print(f"Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%", file=sys.stderr)
+            print(file=sys.stderr)
+            print("Query resolution:", file=sys.stderr)
             for order in sorted(backoff["order_usage"].keys(), reverse=True):
                 usage = backoff["order_usage"][order]
-                print(f"  {order}-gram hits: {usage * 100:>5.1f}%")
+                print(f"  {order}-gram hits: {usage * 100:>5.1f}%", file=sys.stderr)
 
-    # Write output
+    # Write the model: always to -o when given; otherwise to stdout unless a
+    # terminal report already owns stdout.
     if args.output:
         with open(args.output, "w") as outfile:
             lm.write(outfile)
         _handle_conversions(args)
-    else:
+    elif not terminal_report_mode:
         lm.write(sys.stdout)
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

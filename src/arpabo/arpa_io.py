@@ -6,6 +6,8 @@ from datetime import datetime
 from math import exp, log
 from typing import Any, TextIO
 
+from arpabo.backoff import NEG_LOG10, START
+
 
 def write_arpa_file(lm, out_path: str) -> bool:
     """Write language model to ARPA format file.
@@ -89,20 +91,23 @@ def _write_order_ngrams(lm, outfile: TextIO, order: int) -> None:
     def write_ngrams(gram_dict: Any, parent_words: list[str], current_order: int) -> None:
         if current_order == 0:
             for word, prob in sorted(gram_dict.items()):
-                if prob <= 0:
-                    continue
                 ngram_words = parent_words + [word]
-                log_prob = log(prob) / lm.LOG10
 
+                # <s> is never a predictable event: emit the -99 sentinel.
+                is_start_unigram = order == 0 and word == START
+                log_prob = NEG_LOG10 if (is_start_unigram or prob <= 0) else log(prob) / lm.LOG10
+
+                words_str = " ".join(ngram_words)
                 if order < lm.max_order - 1:
-                    alpha = get_ngram_prob(lm.alphas[order], parent_words)
-                    if isinstance(alpha, dict):
-                        alpha = 1.0
-                    log_alpha = log(alpha) / lm.LOG10 if alpha > 0 else 0.0
-                    words_str = " ".join(ngram_words)
+                    alpha = _lookup_nested(lm.alphas[order], ngram_words)
+                    if alpha is None:
+                        log_alpha = 0.0  # absent context -> implicit backoff weight 1.0
+                    elif alpha > 0:
+                        log_alpha = log(alpha) / lm.LOG10
+                    else:
+                        log_alpha = NEG_LOG10  # saturated context: no backoff mass
                     print(f"{log_prob:6.4f} {words_str} {log_alpha:6.4f}", file=outfile)
                 else:
-                    words_str = " ".join(ngram_words)
                     print(f"{log_prob:6.4f} {words_str}", file=outfile)
         else:
             for word, value in sorted(gram_dict.items()):
@@ -119,6 +124,20 @@ def get_ngram_prob(prob_dict: Any, ngram_words: list[str]) -> float:
             return 0.0
         current = current[word]
     return current
+
+
+def _lookup_nested(root: Any, words: list[str]):
+    """Return the value stored at ``words``, or None if the path is absent.
+
+    Distinguishes a missing key (None) from a stored 0.0, which get_ngram_prob
+    cannot -- the writer needs that difference to tell an absent backoff weight
+    (implicit 1.0) from a saturated context (stored 0.0)."""
+    current = root
+    for word in words:
+        if not isinstance(current, dict) or word not in current:
+            return None
+        current = current[word]
+    return current if not isinstance(current, dict) else None
 
 
 def load_arpa_file(arpa_file: str, lm_class, verbose: bool = False):
@@ -198,31 +217,37 @@ def load_arpa_file(arpa_file: str, lm_class, verbose: bool = False):
 
 
 def _parse_arpa_ngram_line(lm, line: str, current_order: int) -> None:
-    """Parse a single n-gram line from ARPA format and store it."""
+    """Parse a single n-gram line from ARPA format and store it.
+
+    Parses positionally by the declared section order: an (order+1)-gram line is
+    ``logprob w1 .. w_{order+1} [backoff]``. This is robust to vocabulary tokens
+    that look like numbers (e.g. years, house numbers), which a "sniff the last
+    field as a float" parser silently corrupts. Backoff weights are converted to
+    the linear domain and stored keyed by the full n-gram (the context they apply
+    to), matching how the writer reads them back.
+    """
     parts = line.split()
-    if len(parts) < 2:
+    n = current_order + 1
+    if len(parts) < 1 + n:
         return
 
     log_prob = float(parts[0])
     prob = exp(log_prob * lm.LOG10)
+    words = parts[1 : 1 + n]
 
-    try:
-        alpha = float(parts[-1])
-        words = parts[1:-1]
-    except ValueError:
-        alpha = 1.0
-        words = parts[1:]
+    alpha = None
+    if len(parts) > 1 + n and current_order < lm.max_order - 1:
+        alpha = exp(float(parts[1 + n]) * lm.LOG10)
 
-    if len(words) == 1:
+    if n == 1:
         word = words[0]
         lm.probs[0][word] = prob
         lm.grams[0][word] = int(prob * 1000)
         lm.sum_1 += int(prob * 1000)
+        if alpha is not None:
+            lm.alphas[0][word] = alpha
     else:
-        context_words = words[:-1]
         lm._set_ngram_prob(lm.probs[current_order], words, prob)
-
-        if current_order < lm.max_order - 1:
-            lm._set_ngram_prob(lm.alphas[current_order], context_words, alpha)
-
         lm._set_ngram_prob(lm.grams[current_order], words, int(prob * 1000))
+        if alpha is not None:
+            lm._set_ngram_prob(lm.alphas[current_order], words, alpha)

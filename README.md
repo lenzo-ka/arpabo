@@ -239,9 +239,7 @@ Binary conversion is optional and only improves loading speed.
 
 ### Examples
 - [examples/model_comparison_example.py](examples/model_comparison_example.py) - Complete workflow example
-
-### Feature Summaries
-See `PHASE_1_COMPLETE.md`, `PHASE_2_COMPLETE.md`, and `PHASE_3_COMPLETE.md` for detailed feature documentation.
+- [examples/hyperparameter_optimization_example.py](examples/hyperparameter_optimization_example.py) - Grid-search optimization
 
 ## Development
 

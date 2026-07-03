@@ -9,6 +9,7 @@ from math import log
 from typing import Any, Optional, TextIO, Union
 
 from arpabo.arpa_io import get_ngram_prob, load_arpa_file, write_arpa, write_arpa_file
+from arpabo.backoff import finalize_model
 from arpabo.debug import debug_sentence, interactive_debug, print_stats
 from arpabo.normalize import normalize_line, normalize_token, normalize_unicode
 from arpabo.smoothing import create_smoother
@@ -300,7 +301,7 @@ class ArpaBoLM:
         - Optimization (for auto method)
         """
         if not self.grams[0]:
-            sys.exit("No input?")
+            raise ValueError("No input: corpus is empty, cannot compute a model.")
 
         self.sum_1 = sum(self.grams[0].values())
 
@@ -313,6 +314,10 @@ class ArpaBoLM:
         # Update discount_mass if smoother optimized it
         if hasattr(self.smoother, "discount_mass"):
             self.discount_mass = self.smoother.discount_mass
+
+        # Normalize unigrams and compute correct backoff weights so the emitted
+        # model is a proper probability distribution regardless of smoother.
+        finalize_model(self)
 
     def compute_multiple_orders(self, orders: list[int]) -> dict[int, "ArpaBoLM"]:
         """
@@ -337,7 +342,7 @@ class ArpaBoLM:
                 model.write_file(f"{order}gram.arpa")
         """
         if not self.grams[0]:
-            sys.exit("No input?")
+            raise ValueError("No input: corpus is empty, cannot compute a model.")
 
         # Validate orders
         max_order_needed = max(orders)
@@ -434,6 +439,10 @@ class ArpaBoLM:
             )
 
             for i, word in enumerate(words):
+                # <s> is never a predicted event (it only ever conditions).
+                if word == "<s>":
+                    continue
+
                 # Check if word is in vocabulary
                 if word not in self.probs[0]:
                     oov_count += 1
@@ -444,13 +453,10 @@ class ArpaBoLM:
                         continue
                     # else: handle as unk below
 
-                # Get probability using helper
+                # Score with full ARPA backoff (always a positive linear prob).
                 prob, _ = self._get_ngram_probability(word, words, i)
 
-                # Convert to log10 if not already
-                prob_log10 = prob if prob < 0 else math.log10(prob)
-
-                total_log_prob += prob_log10
+                total_log_prob += math.log10(prob)
                 total_words += 1
 
         if total_words == 0:
@@ -472,26 +478,30 @@ class ArpaBoLM:
             "oov_rate": oov_count / total_words if total_words > 0 else 0.0,
         }
 
-    def print_perplexity_results(self, results: dict, test_file: str = "test data") -> None:
+    def print_perplexity_results(
+        self, results: dict, test_file: str = "test data", file: Optional[TextIO] = None
+    ) -> None:
         """
         Print perplexity evaluation results in a formatted way.
 
         Args:
             results: Dictionary returned from perplexity()
             test_file: Name of test file for display
+            file: Stream to print to (default: stdout, resolved at call time)
         """
-        print("\nPerplexity Evaluation")
-        print("=" * 50)
-        print(f"Model: {self.max_order}-gram {self.smoothing_method}")
-        print(f"Test file: {test_file}")
-        print()
-        print("Evaluation Results:")
-        print(f"  Sentences:      {results['num_sentences']:>8,}")
-        print(f"  Words:          {results['num_words']:>8,}")
-        print(f"  OOV words:      {results['num_oov']:>8,} ({results['oov_rate'] * 100:.1f}%)")
-        print()
-        print(f"  Perplexity:     {results['perplexity']:>8.1f}")
-        print(f"  Cross-entropy:  {results['cross_entropy']:>8.2f} bits/word")
+        file = file if file is not None else sys.stdout
+        print("\nPerplexity Evaluation", file=file)
+        print("=" * 50, file=file)
+        print(f"Model: {self.max_order}-gram {self.smoothing_method}", file=file)
+        print(f"Test file: {test_file}", file=file)
+        print(file=file)
+        print("Evaluation Results:", file=file)
+        print(f"  Sentences:      {results['num_sentences']:>8,}", file=file)
+        print(f"  Words:          {results['num_words']:>8,}", file=file)
+        print(f"  OOV words:      {results['num_oov']:>8,} ({results['oov_rate'] * 100:.1f}%)", file=file)
+        print(file=file)
+        print(f"  Perplexity:     {results['perplexity']:>8.1f}", file=file)
+        print(f"  Cross-entropy:  {results['cross_entropy']:>8.2f} bits/word", file=file)
 
     def get_statistics(self) -> dict:
         """
@@ -606,7 +616,11 @@ class ArpaBoLM:
 
     def _get_ngram_probability(self, word: str, words: list[str], position: int) -> tuple[float, int]:
         """
-        Get probability for word at position using best available n-gram order.
+        Get probability for word at position using full ARPA backoff.
+
+        Applies the standard recursion P(w|h) = P(w|h) if the n-gram is explicit,
+        else alpha(h) * P(w|h') where h' drops the oldest context word -- so the
+        score matches the model this package writes (backoff weights included).
 
         Args:
             word: The word to look up
@@ -615,29 +629,52 @@ class ArpaBoLM:
 
         Returns:
             Tuple of (probability, order_used)
-            - probability: Raw probability (not log), or OOV_PROBABILITY if not found
-            - order_used: Which n-gram order was actually used (1 to max_order)
+            - probability: linear probability, floored to OOV_PROBABILITY if the
+              backoff chain leaves no mass
+            - order_used: highest n-gram order that supplied an explicit prob
+              (1 to max_order)
         """
-        # Try from highest order down
-        for order in range(min(position, self.max_order - 1), -1, -1):
-            if order == 0:
-                # Unigram
-                if word in self.probs[0]:
-                    return self.probs[0][word], 1
-                return OOV_PROBABILITY, 1
-            else:
-                # Higher-order n-gram
-                context_words = words[max(0, position - order) : position]
-                ngram_words = context_words + [word]
+        max_ctx = min(position, self.max_order - 1)
+        history = words[position - max_ctx : position]
+        prob, order_used = self._backoff_probability(history, word)
+        if prob is None or prob <= 0:
+            return OOV_PROBABILITY, 1
+        return prob, order_used
 
-                # Query probability
-                prob_result = get_ngram_prob(self.probs[order], ngram_words)
+    def _backoff_probability(self, history: list[str], word: str) -> tuple[Optional[float], int]:
+        """Linear P(word | history) via ARPA backoff; (None, order) if no mass."""
+        order_idx = len(history)
+        ngram_words = list(history) + [word]
 
-                if not isinstance(prob_result, dict) and prob_result is not None and prob_result > 0:
-                    return prob_result, order + 1
+        explicit = get_ngram_prob(self.probs[order_idx], ngram_words)
+        if not isinstance(explicit, dict) and explicit is not None and explicit > 0:
+            return explicit, order_idx + 1
 
-        # Fallback to OOV probability
-        return OOV_PROBABILITY, 1
+        if order_idx == 0:
+            return None, 1  # unigram absent -> out of vocabulary
+
+        # Back off: multiply by the context's backoff weight (linear alpha). A
+        # context that is not present in the model has an implicit weight of 1.0
+        # (ARPA convention); only an explicitly stored 0.0 means a saturated
+        # context that reserves no backoff mass.
+        alpha = self._lookup_alpha(order_idx - 1, history)
+        lower_prob, lower_order = self._backoff_probability(history[1:], word)
+        if lower_prob is None:
+            return None, lower_order
+        if alpha is None:
+            alpha = 1.0
+        elif alpha <= 0:
+            return None, lower_order
+        return alpha * lower_prob, lower_order
+
+    def _lookup_alpha(self, order_idx: int, history: list[str]) -> Optional[float]:
+        """Backoff weight for ``history`` from alphas[order_idx]; None if absent."""
+        node = self.alphas[order_idx]
+        for w in history:
+            if not isinstance(node, dict) or w not in node:
+                return None
+            node = node[w]
+        return node if not isinstance(node, dict) else None
 
     def _get_order_used(self, word: str, words: list[str], position: int) -> int:
         """
@@ -654,43 +691,45 @@ class ArpaBoLM:
         _, order_used = self._get_ngram_probability(word, words, position)
         return order_used
 
-    def print_statistics(self, test_file: Optional[str] = None) -> None:
+    def print_statistics(self, test_file: Optional[str] = None, file: Optional[TextIO] = None) -> None:
         """
         Print comprehensive model statistics in formatted output.
 
         Args:
             test_file: Optional test file for backoff analysis
+            file: Stream to print to (default: stdout, resolved at call time)
         """
+        file = file if file is not None else sys.stdout
         stats = self.get_statistics()
 
-        print("\nModel Statistics")
-        print("=" * 50)
-        print(f"Order:      {stats['order']}")
-        print(f"Smoothing:  {stats['smoothing']}")
-        print(f"Vocabulary: {stats['vocab_size']:,} words")
-        print()
-        print("N-gram counts:")
+        print("\nModel Statistics", file=file)
+        print("=" * 50, file=file)
+        print(f"Order:      {stats['order']}", file=file)
+        print(f"Smoothing:  {stats['smoothing']}", file=file)
+        print(f"Vocabulary: {stats['vocab_size']:,} words", file=file)
+        print(file=file)
+        print("N-gram counts:", file=file)
         for order in sorted(stats["ngram_counts"].keys()):
             count = stats["ngram_counts"][order]
-            print(f"  {order}-grams: {count:>12,}")
-        print()
-        print("Training corpus:")
-        print(f"  Sentences: {stats['training_corpus']['sentences']:>10,}")
-        print(f"  Tokens:    {stats['training_corpus']['tokens']:>10,}")
+            print(f"  {order}-grams: {count:>12,}", file=file)
+        print(file=file)
+        print("Training corpus:", file=file)
+        print(f"  Sentences: {stats['training_corpus']['sentences']:>10,}", file=file)
+        print(f"  Tokens:    {stats['training_corpus']['tokens']:>10,}", file=file)
 
         # Add backoff analysis if test file provided
         if test_file:
-            print()
-            print(f"Backoff analysis (on {test_file}):")
+            print(file=file)
+            print(f"Backoff analysis (on {test_file}):", file=file)
             with open(test_file) as f:
                 backoff = self.backoff_rate(f)
 
-            print(f"  Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%")
-            print()
-            print("  Query resolution:")
+            print(f"  Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%", file=file)
+            print(file=file)
+            print("  Query resolution:", file=file)
             for order in sorted(backoff["order_usage"].keys(), reverse=True):
                 usage = backoff["order_usage"][order]
-                print(f"    {order}-gram hits: {usage * 100:>5.1f}%")
+                print(f"    {order}-gram hits: {usage * 100:>5.1f}%", file=file)
 
     def _count_ngrams(self, gram_dict: Any, order: int) -> int:
         """Count how many different n-grams we have of a given order"""

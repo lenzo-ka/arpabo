@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import Any
 
 from arpabo.smoothing.base import SmoothingMethod
-from arpabo.smoothing.utils import compute_simple_backoff_weights, set_ngram_prob
+from arpabo.smoothing.utils import katz_discount_ratios, set_ngram_prob
 
 
 class GoodTuringSmoother(SmoothingMethod):
@@ -28,10 +28,6 @@ class GoodTuringSmoother(SmoothingMethod):
             else:
                 self._compute_order_probabilities(grams[order], order, probs[order])
 
-            # Compute backoff weights for all but last order
-            if order < self.max_order - 1:
-                self._compute_backoff_weights(grams[order], order, probs, alphas[order])
-
     def _compute_frequency_of_frequencies(self, gram_dict: Any, order: int) -> dict[int, int]:
         """Compute frequency of frequencies: how many n-grams appear c times."""
         freq_of_freq = defaultdict(int)
@@ -48,29 +44,24 @@ class GoodTuringSmoother(SmoothingMethod):
         return dict(freq_of_freq)
 
     def _compute_unigram_probabilities(self, grams_0: Any, sum_1: int, probs_0: Any) -> None:
-        """Compute Good-Turing smoothed unigram probabilities."""
+        """Compute Good-Turing smoothed unigram probabilities.
+
+        The unigram distribution is renormalized downstream, so we only need
+        proper (never-inflating) discounted counts here.
+        """
         freq_of_freq = self._compute_frequency_of_frequencies(grams_0, 0)
+        discount = katz_discount_ratios(freq_of_freq)
         total_count = sum(grams_0.values())
 
-        n1 = freq_of_freq.get(1, 0)
-        total_adjusted = total_count
-
-        if n1 > 0:
-            total_adjusted = total_count - n1 / 2.0
-
         for word, count in grams_0.items():
-            if count + 1 in freq_of_freq and count in freq_of_freq and freq_of_freq[count] > 0:
-                adjusted_count = (count + 1) * freq_of_freq[count + 1] / freq_of_freq[count]
-            else:
-                adjusted_count = count
-
-            prob = adjusted_count / total_adjusted if total_adjusted > 0 else 0.0
-            prob = min(prob, 1.0)
-            probs_0[word] = prob
+            adjusted_count = discount(count) * count
+            prob = adjusted_count / total_count if total_count > 0 else 0.0
+            probs_0[word] = min(prob, 1.0)
 
     def _compute_order_probabilities(self, gram_dict: Any, order: int, prob_dict: Any) -> None:
         """Compute Good-Turing probabilities for n-grams of a given order."""
         freq_of_freq = self._compute_frequency_of_frequencies(gram_dict, order)
+        discount = katz_discount_ratios(freq_of_freq)
 
         def process_ngrams(gd: Any, parent_words: list[str], current_order: int) -> None:
             if current_order == 0:
@@ -78,21 +69,11 @@ class GoodTuringSmoother(SmoothingMethod):
 
                 for word, count in gd.items():
                     ngram_words = parent_words + [word]
-
-                    if count + 1 in freq_of_freq and count in freq_of_freq and freq_of_freq[count] > 0:
-                        adjusted_count = (count + 1) * freq_of_freq[count + 1] / freq_of_freq[count]
-                    else:
-                        adjusted_count = count
-
+                    adjusted_count = discount(count) * count
                     prob = adjusted_count / total_count if total_count > 0 else 0.0
-                    prob = min(prob, 1.0)
-                    set_ngram_prob(prob_dict, ngram_words, prob)
+                    set_ngram_prob(prob_dict, ngram_words, min(prob, 1.0))
             else:
                 for word, value in gd.items():
                     process_ngrams(value, parent_words + [word], current_order - 1)
 
         process_ngrams(gram_dict, [], order)
-
-    def _compute_backoff_weights(self, gram_dict: Any, order: int, probs: list[Any], alpha_dict: Any) -> None:
-        """Compute backoff weights (always 1.0 for Good-Turing without Katz)."""
-        compute_simple_backoff_weights(gram_dict, order, probs, alpha_dict, set_ngram_prob)

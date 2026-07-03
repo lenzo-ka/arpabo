@@ -171,7 +171,7 @@ Comprehensive comparison views:
 ```
 Rank   Order   Method          Discount   PPL        Entropy
 ------------------------------------------------------------
-1      3       kneser_ney      N/A        156.2      7.29 ✓
+1      3       kneser_ney      N/A        156.2      7.29
 2      4       kneser_ney      N/A        158.4      7.31
 3      2       kneser_ney      N/A        165.8      7.37
 ```
