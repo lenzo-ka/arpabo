@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-03
+
+### Fixed (model correctness)
+
+**Models written before 0.4.0 were not proper probability models and their
+perplexities are not comparable across this boundary.** Backoff weights were
+hardcoded to 1.0 (or computed with a wrong denominator that clamped to 1.0) and
+written on the wrong ARPA lines, so per-context probabilities summed to
+1.12-1.48 instead of 1.0.
+
+- Backoff weights are now computed correctly for every context and written on
+  the correct lines; unigram distributions are normalized and `<s>` carries the
+  `-99` sentinel. Good-Turing, Kneser-Ney, Katz and MLE all emit models that
+  sum to 1 for every context (verified by a new normalization test harness).
+- Good-Turing now uses proper Katz-Good-Turing discount ratios with a cutoff
+  (never inflates a count) instead of applying `c*` at all counts.
+- Kneser-Ney now uses continuation counts at every order below the top, not
+  just unigrams -- previously the middle orders were plain absolute discounting.
+- `perplexity()` now scores with full ARPA backoff (previously it ignored
+  backoff weights), excludes `<s>`, and no longer crashes on a zero probability.
+- The ARPA loader parses positionally by declared order (numeric vocabulary
+  tokens like years are no longer mistaken for backoff weights) and preserves
+  backoff weights through a load/write cycle.
+
+### Fixed (CLI)
+
+- `arpabo corpus --eval test > model.arpa` no longer corrupts the output:
+  evaluation reports go to stderr, keeping stdout a clean ARPA model.
+- `-o` is always honored, including under `--stats`.
+- `--preset` no longer overrides explicit `-m`/`-s`; explicit flags win.
+- Library code raises `ValueError` on empty input instead of calling
+  `sys.exit()`.
+
 ## [0.3.0] - 2025-11-25
 
 ### Added

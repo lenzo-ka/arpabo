@@ -1,9 +1,9 @@
-"""ArpaLM - Build ARPA format statistical language models
+"""arpabo - Build ARPA format statistical language models
 
 This package provides tools for building statistical language models in ARPA format.
 
 Library Usage:
-    from arpalm import ArpaBoLM
+    from arpabo import ArpaBoLM
 
     lm = ArpaBoLM(max_order=3, smoothing_method="good_turing")
     with open("corpus.txt") as f:
@@ -12,9 +12,9 @@ Library Usage:
     lm.write_file("model.arpa")
 
 Command Line Usage:
-    arpalm corpus.txt -o model.arpa
-    arpalm corpus.txt -o model.arpa -m 4 -s kneser_ney
-    arpalm --demo -o model.arpa  # Use example corpus
+    arpabo corpus.txt -o model.arpa
+    arpabo corpus.txt -o model.arpa -m 4 -s kneser_ney
+    arpabo --demo -o model.arpa  # Use example corpus
 """
 
 from arpabo.comparison import (
@@ -28,12 +28,15 @@ from arpabo.comparison import (
 from arpabo.convert import (
     ConversionError,
     check_conversion_tools,
+    from_pocketsphinx_binary,
     to_kaldi_fst,
     to_pocketsphinx_binary,
+    to_pocketsphinx_binary_native,
 )
 from arpabo.crossval import cross_validate, print_cv_results
 from arpabo.data import get_example_corpus, list_example_corpora
 from arpabo.interpolation import InterpolatedModel, tune_interpolation_weights
+from arpabo.kenlm_bin import read_kenlm_bin
 from arpabo.lm import ArpaBoLM
 from arpabo.normalize import (
     clean_text,
@@ -52,7 +55,7 @@ from arpabo.smoothing import (
 )
 from arpabo.utils import parse_order_spec, parse_range_spec
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = [
     "ArpaBoLM",
     "ConversionError",
@@ -67,6 +70,7 @@ __all__ = [
     "compare_smoothing_methods",
     "create_smoother",
     "cross_validate",
+    "from_pocketsphinx_binary",
     "get_example_corpus",
     "get_preset",
     "list_example_corpora",
@@ -83,7 +87,9 @@ __all__ = [
     "print_optimization_results",
     "print_presets",
     "print_smoothing_comparison",
+    "read_kenlm_bin",
     "to_kaldi_fst",
     "to_pocketsphinx_binary",
+    "to_pocketsphinx_binary_native",
     "tune_interpolation_weights",
 ]
