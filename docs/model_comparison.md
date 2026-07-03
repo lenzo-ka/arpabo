@@ -517,18 +517,18 @@ comparison.add_uniform_baseline()
 ```python
 # Must train before evaluate
 comparison = ModelComparison("corpus.txt")
-comparison.evaluate("test.txt")  # ❌ ValueError
+comparison.evaluate("test.txt")  # raises ValueError
 
 # Must evaluate before recommend
 comparison.train_orders([1,2,3])
-comparison.recommend()  # ❌ ValueError
+comparison.recommend()  # raises ValueError
 
 # Must train before export
 comparison = ModelComparison("corpus.txt")
-comparison.export_for_optimization("output/")  # ❌ ValueError
+comparison.export_for_optimization("output/")  # raises ValueError
 
 # Invalid goal
-comparison.recommend(goal="invalid")  # ❌ ValueError
+comparison.recommend(goal="invalid")  # raises ValueError
 ```
 
 ## Performance
@@ -622,11 +622,11 @@ best = comparison.recommend(goal="first-pass")
 ```
 
 **Benefits:**
-- ✅ Cleaner code
-- ✅ Less boilerplate
-- ✅ Built-in recommendations
-- ✅ Export functionality
-- ✅ Formatted output
+- Cleaner code
+- Less boilerplate
+- Built-in recommendations
+- Export functionality
+- Formatted output
 
 ## Advanced Usage
 
