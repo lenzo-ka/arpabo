@@ -439,6 +439,10 @@ class ArpaBoLM:
             )
 
             for i, word in enumerate(words):
+                # <s> is never a predicted event (it only ever conditions).
+                if word == "<s>":
+                    continue
+
                 # Check if word is in vocabulary
                 if word not in self.probs[0]:
                     oov_count += 1
@@ -449,13 +453,10 @@ class ArpaBoLM:
                         continue
                     # else: handle as unk below
 
-                # Get probability using helper
+                # Score with full ARPA backoff (always a positive linear prob).
                 prob, _ = self._get_ngram_probability(word, words, i)
 
-                # Convert to log10 if not already
-                prob_log10 = prob if prob < 0 else math.log10(prob)
-
-                total_log_prob += prob_log10
+                total_log_prob += math.log10(prob)
                 total_words += 1
 
         if total_words == 0:
@@ -615,7 +616,11 @@ class ArpaBoLM:
 
     def _get_ngram_probability(self, word: str, words: list[str], position: int) -> tuple[float, int]:
         """
-        Get probability for word at position using best available n-gram order.
+        Get probability for word at position using full ARPA backoff.
+
+        Applies the standard recursion P(w|h) = P(w|h) if the n-gram is explicit,
+        else alpha(h) * P(w|h') where h' drops the oldest context word -- so the
+        score matches the model this package writes (backoff weights included).
 
         Args:
             word: The word to look up
@@ -624,29 +629,52 @@ class ArpaBoLM:
 
         Returns:
             Tuple of (probability, order_used)
-            - probability: Raw probability (not log), or OOV_PROBABILITY if not found
-            - order_used: Which n-gram order was actually used (1 to max_order)
+            - probability: linear probability, floored to OOV_PROBABILITY if the
+              backoff chain leaves no mass
+            - order_used: highest n-gram order that supplied an explicit prob
+              (1 to max_order)
         """
-        # Try from highest order down
-        for order in range(min(position, self.max_order - 1), -1, -1):
-            if order == 0:
-                # Unigram
-                if word in self.probs[0]:
-                    return self.probs[0][word], 1
-                return OOV_PROBABILITY, 1
-            else:
-                # Higher-order n-gram
-                context_words = words[max(0, position - order) : position]
-                ngram_words = context_words + [word]
+        max_ctx = min(position, self.max_order - 1)
+        history = words[position - max_ctx : position]
+        prob, order_used = self._backoff_probability(history, word)
+        if prob is None or prob <= 0:
+            return OOV_PROBABILITY, 1
+        return prob, order_used
 
-                # Query probability
-                prob_result = get_ngram_prob(self.probs[order], ngram_words)
+    def _backoff_probability(self, history: list[str], word: str) -> tuple[Optional[float], int]:
+        """Linear P(word | history) via ARPA backoff; (None, order) if no mass."""
+        order_idx = len(history)
+        ngram_words = list(history) + [word]
 
-                if not isinstance(prob_result, dict) and prob_result is not None and prob_result > 0:
-                    return prob_result, order + 1
+        explicit = get_ngram_prob(self.probs[order_idx], ngram_words)
+        if not isinstance(explicit, dict) and explicit is not None and explicit > 0:
+            return explicit, order_idx + 1
 
-        # Fallback to OOV probability
-        return OOV_PROBABILITY, 1
+        if order_idx == 0:
+            return None, 1  # unigram absent -> out of vocabulary
+
+        # Back off: multiply by the context's backoff weight (linear alpha). A
+        # context that is not present in the model has an implicit weight of 1.0
+        # (ARPA convention); only an explicitly stored 0.0 means a saturated
+        # context that reserves no backoff mass.
+        alpha = self._lookup_alpha(order_idx - 1, history)
+        lower_prob, lower_order = self._backoff_probability(history[1:], word)
+        if lower_prob is None:
+            return None, lower_order
+        if alpha is None:
+            alpha = 1.0
+        elif alpha <= 0:
+            return None, lower_order
+        return alpha * lower_prob, lower_order
+
+    def _lookup_alpha(self, order_idx: int, history: list[str]) -> Optional[float]:
+        """Backoff weight for ``history`` from alphas[order_idx]; None if absent."""
+        node = self.alphas[order_idx]
+        for w in history:
+            if not isinstance(node, dict) or w not in node:
+                return None
+            node = node[w]
+        return node if not isinstance(node, dict) else None
 
     def _get_order_used(self, word: str, words: list[str], position: int) -> int:
         """
