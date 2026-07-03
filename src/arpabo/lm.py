@@ -477,26 +477,30 @@ class ArpaBoLM:
             "oov_rate": oov_count / total_words if total_words > 0 else 0.0,
         }
 
-    def print_perplexity_results(self, results: dict, test_file: str = "test data") -> None:
+    def print_perplexity_results(
+        self, results: dict, test_file: str = "test data", file: Optional[TextIO] = None
+    ) -> None:
         """
         Print perplexity evaluation results in a formatted way.
 
         Args:
             results: Dictionary returned from perplexity()
             test_file: Name of test file for display
+            file: Stream to print to (default: stdout, resolved at call time)
         """
-        print("\nPerplexity Evaluation")
-        print("=" * 50)
-        print(f"Model: {self.max_order}-gram {self.smoothing_method}")
-        print(f"Test file: {test_file}")
-        print()
-        print("Evaluation Results:")
-        print(f"  Sentences:      {results['num_sentences']:>8,}")
-        print(f"  Words:          {results['num_words']:>8,}")
-        print(f"  OOV words:      {results['num_oov']:>8,} ({results['oov_rate'] * 100:.1f}%)")
-        print()
-        print(f"  Perplexity:     {results['perplexity']:>8.1f}")
-        print(f"  Cross-entropy:  {results['cross_entropy']:>8.2f} bits/word")
+        file = file if file is not None else sys.stdout
+        print("\nPerplexity Evaluation", file=file)
+        print("=" * 50, file=file)
+        print(f"Model: {self.max_order}-gram {self.smoothing_method}", file=file)
+        print(f"Test file: {test_file}", file=file)
+        print(file=file)
+        print("Evaluation Results:", file=file)
+        print(f"  Sentences:      {results['num_sentences']:>8,}", file=file)
+        print(f"  Words:          {results['num_words']:>8,}", file=file)
+        print(f"  OOV words:      {results['num_oov']:>8,} ({results['oov_rate'] * 100:.1f}%)", file=file)
+        print(file=file)
+        print(f"  Perplexity:     {results['perplexity']:>8.1f}", file=file)
+        print(f"  Cross-entropy:  {results['cross_entropy']:>8.2f} bits/word", file=file)
 
     def get_statistics(self) -> dict:
         """
@@ -659,43 +663,45 @@ class ArpaBoLM:
         _, order_used = self._get_ngram_probability(word, words, position)
         return order_used
 
-    def print_statistics(self, test_file: Optional[str] = None) -> None:
+    def print_statistics(self, test_file: Optional[str] = None, file: Optional[TextIO] = None) -> None:
         """
         Print comprehensive model statistics in formatted output.
 
         Args:
             test_file: Optional test file for backoff analysis
+            file: Stream to print to (default: stdout, resolved at call time)
         """
+        file = file if file is not None else sys.stdout
         stats = self.get_statistics()
 
-        print("\nModel Statistics")
-        print("=" * 50)
-        print(f"Order:      {stats['order']}")
-        print(f"Smoothing:  {stats['smoothing']}")
-        print(f"Vocabulary: {stats['vocab_size']:,} words")
-        print()
-        print("N-gram counts:")
+        print("\nModel Statistics", file=file)
+        print("=" * 50, file=file)
+        print(f"Order:      {stats['order']}", file=file)
+        print(f"Smoothing:  {stats['smoothing']}", file=file)
+        print(f"Vocabulary: {stats['vocab_size']:,} words", file=file)
+        print(file=file)
+        print("N-gram counts:", file=file)
         for order in sorted(stats["ngram_counts"].keys()):
             count = stats["ngram_counts"][order]
-            print(f"  {order}-grams: {count:>12,}")
-        print()
-        print("Training corpus:")
-        print(f"  Sentences: {stats['training_corpus']['sentences']:>10,}")
-        print(f"  Tokens:    {stats['training_corpus']['tokens']:>10,}")
+            print(f"  {order}-grams: {count:>12,}", file=file)
+        print(file=file)
+        print("Training corpus:", file=file)
+        print(f"  Sentences: {stats['training_corpus']['sentences']:>10,}", file=file)
+        print(f"  Tokens:    {stats['training_corpus']['tokens']:>10,}", file=file)
 
         # Add backoff analysis if test file provided
         if test_file:
-            print()
-            print(f"Backoff analysis (on {test_file}):")
+            print(file=file)
+            print(f"Backoff analysis (on {test_file}):", file=file)
             with open(test_file) as f:
                 backoff = self.backoff_rate(f)
 
-            print(f"  Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%")
-            print()
-            print("  Query resolution:")
+            print(f"  Overall backoff rate: {backoff['overall_backoff_rate'] * 100:.1f}%", file=file)
+            print(file=file)
+            print("  Query resolution:", file=file)
             for order in sorted(backoff["order_usage"].keys(), reverse=True):
                 usage = backoff["order_usage"][order]
-                print(f"    {order}-gram hits: {usage * 100:>5.1f}%")
+                print(f"    {order}-gram hits: {usage * 100:>5.1f}%", file=file)
 
     def _count_ngrams(self, gram_dict: Any, order: int) -> int:
         """Count how many different n-grams we have of a given order"""
