@@ -9,6 +9,7 @@ from math import log
 from typing import Any, Optional, TextIO, Union
 
 from arpabo.arpa_io import get_ngram_prob, load_arpa_file, write_arpa, write_arpa_file
+from arpabo.backoff import finalize_model
 from arpabo.debug import debug_sentence, interactive_debug, print_stats
 from arpabo.normalize import normalize_line, normalize_token, normalize_unicode
 from arpabo.smoothing import create_smoother
@@ -300,7 +301,7 @@ class ArpaBoLM:
         - Optimization (for auto method)
         """
         if not self.grams[0]:
-            sys.exit("No input?")
+            raise ValueError("No input: corpus is empty, cannot compute a model.")
 
         self.sum_1 = sum(self.grams[0].values())
 
@@ -313,6 +314,10 @@ class ArpaBoLM:
         # Update discount_mass if smoother optimized it
         if hasattr(self.smoother, "discount_mass"):
             self.discount_mass = self.smoother.discount_mass
+
+        # Normalize unigrams and compute correct backoff weights so the emitted
+        # model is a proper probability distribution regardless of smoother.
+        finalize_model(self)
 
     def compute_multiple_orders(self, orders: list[int]) -> dict[int, "ArpaBoLM"]:
         """
@@ -337,7 +342,7 @@ class ArpaBoLM:
                 model.write_file(f"{order}gram.arpa")
         """
         if not self.grams[0]:
-            sys.exit("No input?")
+            raise ValueError("No input: corpus is empty, cannot compute a model.")
 
         # Validate orders
         max_order_needed = max(orders)

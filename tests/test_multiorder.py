@@ -71,7 +71,7 @@ quick brown fox jumps"""
         """Test calling compute_multiple_orders without corpus raises error."""
         lm = ArpaBoLM(max_order=3, verbose=False)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(ValueError):
             lm.compute_multiple_orders([1, 2, 3])
 
     def test_models_can_write(self, sample_corpus, tmp_path):

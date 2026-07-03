@@ -14,7 +14,7 @@ import subprocess
 
 import pytest
 
-from arpabo.kenlm_bin import LMData, read_kenlm_bin, write_arpa, write_kenlm_bin
+from arpabo.kenlm_bin import LMData, read_kenlm_bin, write_kenlm_bin
 
 FIX = os.path.join(os.path.dirname(__file__), "fixtures", "tiny.arpa")
 

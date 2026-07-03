@@ -6,6 +6,8 @@ from datetime import datetime
 from math import exp, log
 from typing import Any, TextIO
 
+from arpabo.backoff import NEG_LOG10, START
+
 
 def write_arpa_file(lm, out_path: str) -> bool:
     """Write language model to ARPA format file.
@@ -89,20 +91,20 @@ def _write_order_ngrams(lm, outfile: TextIO, order: int) -> None:
     def write_ngrams(gram_dict: Any, parent_words: list[str], current_order: int) -> None:
         if current_order == 0:
             for word, prob in sorted(gram_dict.items()):
-                if prob <= 0:
-                    continue
                 ngram_words = parent_words + [word]
-                log_prob = log(prob) / lm.LOG10
 
+                # <s> is never a predictable event: emit the -99 sentinel.
+                is_start_unigram = order == 0 and word == START
+                log_prob = NEG_LOG10 if (is_start_unigram or prob <= 0) else log(prob) / lm.LOG10
+
+                words_str = " ".join(ngram_words)
                 if order < lm.max_order - 1:
-                    alpha = get_ngram_prob(lm.alphas[order], parent_words)
-                    if isinstance(alpha, dict):
+                    alpha = get_ngram_prob(lm.alphas[order], ngram_words)
+                    if isinstance(alpha, dict) or alpha is None:
                         alpha = 1.0
-                    log_alpha = log(alpha) / lm.LOG10 if alpha > 0 else 0.0
-                    words_str = " ".join(ngram_words)
+                    log_alpha = log(alpha) / lm.LOG10 if alpha > 0 else NEG_LOG10
                     print(f"{log_prob:6.4f} {words_str} {log_alpha:6.4f}", file=outfile)
                 else:
-                    words_str = " ".join(ngram_words)
                     print(f"{log_prob:6.4f} {words_str}", file=outfile)
         else:
             for word, value in sorted(gram_dict.items()):
