@@ -5,7 +5,7 @@ Build ARPA format statistical language models with multiple smoothing methods.
 [![Tests](https://github.com/lenzo-ka/arpabo/workflows/Tests/badge.svg)](https://github.com/lenzo-ka/arpabo/actions)
 [![Lint](https://github.com/lenzo-ka/arpabo/workflows/Lint/badge.svg)](https://github.com/lenzo-ka/arpabo/actions)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: BSD 2-Clause](https://img.shields.io/badge/License-BSD_2--Clause-yellow.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
 ## Features
 
@@ -255,4 +255,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-MIT
+BSD 2-Clause
