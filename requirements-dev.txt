@@ -11,5 +11,5 @@ pocketsphinx>=5.0.0
 
 # Code quality
 pre-commit>=3.5.0
-ruff>=0.8.0
+ruff>=0.15.21
 mypy>=1.13.0
